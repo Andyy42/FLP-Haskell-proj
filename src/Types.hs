@@ -3,12 +3,30 @@ module Types
     Layer (..),
     Activation (..),
     Loss (..),
-    Gradients(..),
+    Gradients (..),
     BackpropagationStore (..),
+    InMatrix,
+    OutMatrix,
+    TargetMatrix,
+    DeltasMatrix,
+    LearningRate,
+    LossValue,
   )
 where
 
-import Numeric.LinearAlgebra as La
+import Numeric.LinearAlgebra (Matrix, cols, rows)
+
+type InMatrix a = Matrix Double
+
+type OutMatrix a = Matrix Double
+
+type TargetMatrix a = Matrix Double
+
+type DeltasMatrix a = Matrix Double
+
+type LearningRate = Double
+
+type LossValue = Double
 
 -- TODO: lookup function for activations
 data Activation = Relu | Sigmoid | Tanh deriving (Show)
@@ -48,7 +66,8 @@ type NeuralNetwork a = [Layer a]
 data Gradients a = Gradients
   { dbGradient :: Matrix a,
     dwGradient :: Matrix a
-  } deriving Show
+  }
+  deriving (Show)
 
 data BackpropagationStore a = BackpropagationStore
   { prevLayerZ :: Matrix a,
