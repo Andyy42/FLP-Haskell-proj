@@ -28,9 +28,9 @@ data Layer a = Layer
 instance Show (Layer a) where
   show layer =
     "LinearLayer: out="
-      ++ show (rows $ weights layer)
-      ++ " in="
       ++ show (cols $ weights layer)
+      ++ " in="
+      ++ show (rows $ weights layer)
       ++ "\n"
       ++ "   Activation:"
       ++ show (activation layer)

@@ -124,7 +124,7 @@ newW (nin, nout) = do
 
 -- New biases
 newB ::  Int -> Matrix Double
-newB nout = (nout >< 1) $ repeat 0.01
+newB nout = (1>< nout) $ repeat 0.01
 
 
 getNN = let
@@ -158,7 +158,7 @@ main = do
   --let trainData = trainData'
   targetData <- loadMatrix "data/iris/y.dat"
   --let targetData = trainData'
-  let (nin, nout) = (3, 4)
+  let (nin, nout) = (4, 3)
 
   w1_rand <- newW (nin, nout)
   let b1 = newB nout
@@ -168,16 +168,16 @@ main = do
   let lossFunction = MSE
   let input = trainData
   let target = targetData 
+  putStrLn $ show $ rows trainData 
+  putStrLn $ show $ cols trainData 
   putStr $ show neuralNetwork 
   let (pred0, _) = forward neuralNetwork trainData
   putStrLn $ show $ rows pred0
   putStrLn $ show $ cols pred0
-  putStrLn $ show $ rows targetData
-  putStrLn $ show $ cols targetData 
   putStrLn $ show $ rows trainData
   putStrLn $ show $ cols trainData 
 
-  print $ takeRows 5 (tr' pred0)
+  print $ takeRows 5 ( pred0)
   let (output, backpropStore) = forward neuralNetwork input
   let    lossValue = getLoss lossFunction output target
   print lossValue
@@ -212,7 +212,7 @@ main = do
   -- print $ takeRows 5 pred0 
 
   putStrLn "Some predictions by a trained network:"
-  print $ takeRows 5 (tr' pred0)
+  print $ takeRows 5 ( pred0)
 
   -- putStrLn "Targets"
   -- print $ takeRows 5 targetData 
