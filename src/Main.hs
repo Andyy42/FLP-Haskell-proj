@@ -1,8 +1,31 @@
 module Main where
--- import Types
 
+import Activations (getActivation, getActivation')
+import LossFunction (getLoss, getLoss')
 import NeuralNetwork
-
+  ( backward,
+    forward,
+    gradientDescent,
+    newB,
+    newW,
+    trainLoop,
+    trainOneStep,
+  )
+import Numeric.LinearAlgebra as LA
+import Types
+  ( Activation (..),
+    BackpropagationStore,
+    DeltasMatrix,
+    Gradients,
+    InMatrix,
+    Layer (Layer, activation, biases, weights),
+    LearningRate,
+    Loss (..),
+    LossValue,
+    NeuralNetwork,
+    OutMatrix,
+    TargetMatrix,
+  )
 
 main = do
   trainData <- loadMatrix "data/iris/x.dat"
@@ -14,7 +37,7 @@ main = do
   w1_rand <- newW (nin, nout)
   let b1 = newB nout
   let neuralNetwork = [Layer {weights = w1_rand, biases = b1, activation = Sigmoid}]
-  let epochs = 10000
+  let epochs = 1000
 
   let lossFunction = MSE
   let input = trainData
@@ -43,11 +66,12 @@ main = do
   -- print $ takeRows 5 pred0
 
   putStrLn "Some predictions by a trained network:"
-  print $ takeRows 5 (pred0)
+  print $ takeRows 5 (pred1)
+  putStrLn "Matching original target data:"
+  print $ takeRows 5 (targetData)
 
 -- putStrLn "Targets"
 -- print $ takeRows 5 targetData
-
 
 getNN =
   let (nin, nout) = (3, 4)

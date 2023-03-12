@@ -1,12 +1,12 @@
-module NeuralNetwork (
-  forward,
-  backward,
-  gradientDescent,
-  trainOneStep,
-  trainLoop
-  newB,
-  newW
-)
+module NeuralNetwork
+  ( forward,
+    backward,
+    gradientDescent,
+    trainOneStep,
+    trainLoop,
+    newB,
+    newW,
+  )
 where
 
 import Activations (getActivation, getActivation')
@@ -15,10 +15,16 @@ import Numeric.LinearAlgebra as LA
 import Types
   ( Activation (..),
     BackpropagationStore (..),
+    DeltasMatrix,
     Gradients (..),
+    InMatrix,
     Layer (Layer, activation, biases, weights),
+    LearningRate,
     Loss (..),
+    LossValue,
     NeuralNetwork,
+    OutMatrix,
+    TargetMatrix,
   )
 
 -- Approach 1
@@ -35,10 +41,6 @@ import Types
 -- 2. ask for dy by updating next layer (recursion to 0.)
 -- 3. calculate dw db dy, return updated NN and dy
 
--- | Linear layer inputs gradient
-linearX' :: Numeric t => Matrix t -> Matrix t -> Matrix t
-linearX' w dy = dy LA.<> tr' w
-
 -- | Bias gradient. Calculates derivation of linear layer output w.r.t bias vector b.
 --
 -- For the batched input the gradients db_i are obtained as column-wise mean where columns
@@ -54,8 +56,8 @@ bias' f' = tr' $ cmap (/ batchSize) dB
 -- Returns matrix with gradients dw_ij.
 --
 -- For the batched input the gradients dw_ij in gradient matrix are divided by the number of batches.
-linearW' :: (Numeric b, Fractional b) => Matrix b -> Matrix b -> Matrix b
-linearW' delta prevZ = cmap (/ batchSize) (tr' prevZ LA.<> delta)
+linearW' :: DeltasMatrix Double -> InMatrix Double -> Matrix Double
+linearW' delta prevZ = cmap (/ batchSize) (tr' delta LA.<> prevZ)
   where
     batchSize = fromIntegral $ rows prevZ
 
@@ -94,7 +96,7 @@ backwardPass (layer : layers) (store : backpropStores) delta gradients =
   let f' = activationFun' layer $ currentLayerU store -- data in cols (if batched dim is 'batch_size x data')
       delta_times_f' = hadamardProduct delta f'
       batchSize = fromIntegral $ rows delta_times_f' :: Double
-      dW = linearW' (prevLayerZ store) delta_times_f'
+      dW = linearW' delta_times_f' (prevLayerZ store)
       dB = bias' delta_times_f' -- Column vector, it does average for each col for batched NNs
       prevDelta = delta_times_f' LA.<> weights layer -- \delta F W
       currentGrads =
@@ -103,7 +105,8 @@ backwardPass (layer : layers) (store : backpropStores) delta gradients =
             dwGradient = dW
           }
    in backwardPass layers backpropStores delta (currentGrads : gradients)
-backwardPass _ _ delta gradients = (delta, gradients)
+backwardPass [] _ delta gradients = (delta, gradients)
+backwardPass _ [] delta gradients = (delta, gradients)
 
 -- STOCHASTIC GRADIENT DESCENT (SGD)
 
@@ -115,7 +118,8 @@ gradientDescent (layer : layers) (grad : gradients) lr =
       activation = activation layer
     }
     : gradientDescent layers gradients lr
-gradientDescent _ _ _ = []
+gradientDescent [] _ _ = []
+gradientDescent _ [] _ = []
 
 trainOneStep :: NeuralNetwork Double -> Loss -> InMatrix Double -> TargetMatrix Double -> LearningRate -> (LossValue, NeuralNetwork Double)
 trainOneStep neuralNetwork lossFunction input target lr =
@@ -142,66 +146,3 @@ newW (nin, nout) = do
 -- New biases
 newB :: Int -> Matrix Double
 newB nout = (1 >< nout) $ repeat 0.01
-
-getNN =
-  let (nin, nout) = (3, 4)
-      b = newB nout
-      w = (nin >< nout) $ repeat 0.2
-      input = (20 >< nin) $ repeat 0.3 :: InMatrix Double
-      target = (20 >< nout) $ repeat 0.31 :: OutMatrix Double
-      neuralNetwork = [Layer {weights = w, biases = b, activation = Sigmoid}]
-   in (neuralNetwork, input, target, getLoss' MSE)
-
--- (neuralNetwork,input,target,loss') =  getNN
--- (output, backpropStore) = forward neuralNetwork input
--- lossDelta = getLoss' MSE output target
--- f' = activationFun' (head neuralNetwork) $ currentLayerU (head backpropStore)
--- (xxx, gradients) = backward neuralNetwork backpropStore lossDelta
---       delta_times_f' = hadamardProduct delta (tr' f')
---       dW = delta_times_f' LA.<> tr' (currentLayerZ store)
---       dB = delta_times_f'
---       prevDelta = delta_times_f' LA.<> weights layer -- \delta F W
-
-main = do
-  trainData <- loadMatrix "data/iris/x.dat"
-  -- let trainData = trainData'
-  targetData <- loadMatrix "data/iris/y.dat"
-  -- let targetData = trainData'
-  let (nin, nout) = (4, 3)
-
-  w1_rand <- newW (nin, nout)
-  let b1 = newB nout
-  let neuralNetwork = [Layer {weights = w1_rand, biases = b1, activation = Sigmoid}]
-  let epochs = 10000
-
-  let lossFunction = MSE
-  let input = trainData
-  let target = targetData
-  putStr $ show neuralNetwork
-
-  let (pred0, _) = forward neuralNetwork trainData
-
-  putStrLn $ "Initial loss " ++ show (getLoss MSE pred0 $ targetData)
-  let (lossValue, trainedNN) = trainLoop epochs neuralNetwork MSE trainData targetData 0.01
-  -- let (lossValue, trainedNN) = trainOneStep neuralNetwork MSE trainData targetData 0.01
-
-  let (pred1, _) = forward trainedNN trainData
-  putStrLn $ show $ rows pred1
-
-  -- let x = iterate ( (\_ nn -> trainOneStep nn MSE trainData targetData 0.01) 0.0 neuralNetwork)
-
-  -- let w1 = last $ descend (grad (dta, tgt)) epochs 0.01 w1_rand
-
-  --    [_, y_pred0] = forward dta w1_rand
-  --    [_, y_pred] = forward dta w1
-  putStrLn $ "Initial loss " ++ show (getLoss MSE pred0 targetData)
-  putStrLn $ "Loss after training " ++ show (getLoss MSE pred1 targetData)
-
-  -- putStrLn "Some predictions by an untrained network:"
-  -- print $ takeRows 5 pred0
-
-  putStrLn "Some predictions by a trained network:"
-  print $ takeRows 5 (pred0)
-
--- putStrLn "Targets"
--- print $ takeRows 5 targetData
