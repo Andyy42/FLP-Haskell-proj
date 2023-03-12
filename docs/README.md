@@ -18,7 +18,7 @@ All vectors are column vectors
 
 Single layer of fully-connected linear neural network consist of ${M}^{(\ell)}$ neurons where the input vector $\mathbf{z^{(\ell-1)}}$ has ${M}^{(\ell-1)}$ neurons and has total length $L$. Neurons from previous layer are fully-connected with current layer neurons by weighted connections with weight matrix $\mathbf{W^{(\ell)}}$ which has dimension of ${M}^{(\ell-1)}\times{M}^{(\ell)}$ where rows dim ${M}^{(\ell-1)}$ also represents number of connections to single neuron. We also add bias ${b_n^{(\ell)}}$ to each neuron $n$ connection with bias vector $\mathbf{b}^{(\ell)}$. Vector of values $\mathbf{u}^{(\ell)}$ of neurons in current layer can be denoted as:
 $$
-\mathbf{u^{(\ell)}} = \mathbf{W^{(\ell)}}\mathbf{z^{(\ell-1)}} + \mathbf{b^{(\ell)}}
+\mathbf{u^{(\ell)}} = \mathbf{z^{(\ell-1)}}\mathbf{W^{(\ell)}} + \mathbf{b^{(\ell)}}
 $$
 
 With corresponding derivations:
@@ -39,7 +39,7 @@ where $\mathbf{I}$ is the identity matrix.
 
 Let us denote $f$ as our activation function then one layer of neural network with nonlinearity would be written as: 
 $$
-\mathbf{z^{(\ell)}} =f(\mathbf{u}^{(\ell)})= f(\mathbf{W}^{(\ell)}\mathbf{z}^{(\ell-1)} + \mathbf{b}^{(\ell)})
+\mathbf{z^{(\ell)}} =f(\mathbf{u}^{(\ell)})= f(\mathbf{z}^{(\ell-1)}\mathbf{W}^{(\ell)} + \mathbf{b}^{(\ell)})
 $$
 
 where  $\mathbf{z^{(\ell)}}$ is the final output from one layer after the activation function, which is then propagated to next layer. The derivation w.r.t. to the output of linear layer would be:
@@ -229,7 +229,7 @@ $$
 \delta^{(\ell)}
 \frac{{\partial\mathbf{z}^{(\ell
 )}}}{\partial\mathbf{W}^{(\ell)}} =
-\bigl(\mathbf{z}^{(\ell)}\bigr)^T
+\bigl(\mathbf{z}^{(\ell-1)}\bigr)^T
 \bigl(\delta^{(\ell)}
 \mathbf{F}^{(\ell)}\bigr)
 $$

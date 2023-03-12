@@ -56,7 +56,7 @@ sigmoid' x = sigmoid x * (1 - sigmoid x)
 
 -- cSigmoid' :: (Container c b, Floating b, Num (c b)) => c b -> c b
 cSigmoid' :: Matrix Double -> Matrix Double
-cSigmoid' = cmap sigmoid
+cSigmoid' = cmap sigmoid'
 
 -- tanh is defined in Prelude.
 -- tanh :: Floating a => a -> a

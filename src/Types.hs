@@ -28,9 +28,9 @@ data Layer a = Layer
 instance Show (Layer a) where
   show layer =
     "LinearLayer: out="
-      ++ show (cols $ weights layer)
-      ++ " in="
       ++ show (rows $ weights layer)
+      ++ " in="
+      ++ show (cols $ weights layer)
       ++ "\n"
       ++ "   Activation:"
       ++ show (activation layer)
@@ -48,11 +48,11 @@ type NeuralNetwork a = [Layer a]
 data Gradients a = Gradients
   { dbGradient :: Matrix a,
     dwGradient :: Matrix a
-  }
+  } deriving Show
 
 data BackpropagationStore a = BackpropagationStore
-  { prevInputX :: Matrix a,
-    activationFunResult :: Matrix a
+  { prevLayerZ :: Matrix a,
+    currentLayerU :: Matrix a
   }
 
 -- type BackpropagationStoreValues a = [BackpropagationStore a]
