@@ -84,3 +84,10 @@ data Experiment = Experiment
     modelPath :: String
     -- definition of NN?
   }
+
+data TrainData = TrainData
+  { inTrain :: [Matrix Double],
+    tgtTrain :: [Matrix Double],
+    inValid :: [Matrix Double],
+    tgtValid :: [Matrix Double] 
+  }
