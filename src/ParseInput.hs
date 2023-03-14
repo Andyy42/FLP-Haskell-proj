@@ -3,19 +3,7 @@ module ParseInput (parseExperiment) where
 import Control.Monad (void)
 import Text.Parsec
 import Text.Parsec.String (Parser)
-import Types (DataPaths (..), LinearLayerConfig (..))
-
--- | The Experiment record type
-data Experiment = Experiment
-  { expName :: String,
-    expEpochs :: Int,
-    expBatchSize :: Int,
-    expLearningRate :: Double,
-    expDataPaths :: DataPaths,
-    expLossFunction :: String,
-    expArchitecture :: [LinearLayerConfig]
-  }
-  deriving (Show)
+import Types (Activation (..), DataPaths (..), Experiment (..), LinearLayerConfig (..), Loss (..))
 
 -- | Parse a string enclosed in double quotes
 quotedString :: Parser String
@@ -23,6 +11,19 @@ quotedString = char '"' *> manyTill anyChar (try $ char '"')
 
 whitespace :: Parser ()
 whitespace = void $ many $ oneOf " \n\t"
+
+fromStrActivation :: String -> Activation
+fromStrActivation val
+  | val `elem` ["Relu", "ReLu", "ReLU", "relu"] = Relu
+  | val `elem` ["Sigmoid", "sigmoid"] = Sigmoid
+  | val `elem` ["Tanh", "tanh"] = Tanh
+  | otherwise = ID -- TODO: Throw error
+
+fromStrLoss :: String -> Loss
+fromStrLoss val
+  | val `elem` ["mse", "MSE"] = MSE
+  | val `elem` ["CrossEntropy", "CE", "ce"] = CrossEntropy
+  | otherwise = MSE  -- TODO: Throw error
 
 -- | Parse an integer
 int :: Parser Int
@@ -65,7 +66,7 @@ layerParser = do
   spaces
   string "}"
   spaces
-  return $ LinearLayerConfig inSize outSize activation
+  return $ LinearLayerConfig inSize outSize $ fromStrActivation activation
 
 -- | Parse an Experiment block
 experimentParser :: Parser Experiment
@@ -81,9 +82,8 @@ experimentParser = do
   architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* char '\n'
   spaces
   string "}"
-  return $ Experiment name epochs batchSize learningRate dataPaths lossFunction architecture
+  return $ Experiment name epochs batchSize learningRate dataPaths (fromStrLoss lossFunction) architecture
 
 -- | Parse a configuration file and return an Experiment record
 parseExperiment :: String -> Either ParseError Experiment
-parseExperiment input = parse experimentParser "" input
-
+parseExperiment = parse experimentParser ""

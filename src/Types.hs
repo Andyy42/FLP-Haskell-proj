@@ -13,39 +13,40 @@ module Types
     LossValue,
     DataPaths (..),
     LinearLayerConfig (..),
+    Experiment (..),
   )
 where
 
 import Numeric.LinearAlgebra (Matrix, cols, rows)
 
-type InMatrix a = Matrix Double
+type InMatrix = Matrix Double
 
-type OutMatrix a = Matrix Double
+type OutMatrix = Matrix Double
 
-type TargetMatrix a = Matrix Double
+type TargetMatrix = Matrix Double
 
-type DeltasMatrix a = Matrix Double
+type DeltasMatrix = Matrix Double
 
 type LearningRate = Double
 
 type LossValue = Double
 
 -- TODO: lookup function for activations
-data Activation = Relu | Sigmoid | Tanh deriving (Show)
+data Activation = Relu | Sigmoid | Tanh | ID deriving (Show)
 
 -- \| Softmax
 
 -- TODO: lookup function for loss functions
-data Loss = MSE | CrossEntropy
+data Loss = MSE | CrossEntropy deriving (Show)
 
 -- Layer containes:   weights,   biases,   activation (non-linearity)
-data Layer a = Layer
-  { weights :: Matrix a,
-    biases :: Matrix a,
+data Layer = Layer
+  { weights :: Matrix Double,
+    biases :: Matrix Double,
     activation :: Activation
   }
 
-instance Show (Layer a) where
+instance Show Layer where
   show layer =
     "LinearLayer: out="
       ++ show (cols $ weights layer)
@@ -57,7 +58,7 @@ instance Show (Layer a) where
       ++ "\n"
 
 -- NeuralNetwork (fully-connected) is made of layers
-type NeuralNetwork a = [Layer a]
+type NeuralNetwork = [Layer]
 
 -- instance Show (NeuralNetwork a) where
 --   show = showLayer
@@ -65,27 +66,18 @@ type NeuralNetwork a = [Layer a]
 --         showLayer [x:xs] = show x ++ showLayer xs
 
 -- Gradients for biases 'db' and weights 'dw"
-data Gradients a = Gradients
-  { dbGradient :: Matrix a,
-    dwGradient :: Matrix a
+data Gradients = Gradients
+  { dbGradient :: Matrix Double,
+    dwGradient :: Matrix Double 
   }
   deriving (Show)
 
-data BackpropagationStore a = BackpropagationStore
-  { prevLayerZ :: Matrix a,
-    currentLayerU :: Matrix a
+data BackpropagationStore = BackpropagationStore
+  { prevLayerZ :: Matrix Double,
+    currentLayerU :: Matrix Double
   }
 
 -- type BackpropagationStoreValues a = [BackpropagationStore a]
-
-data Experiment = Experiment
-  { lr :: Float,
-    trainDataPath :: String,
-    testDataPath :: String,
-    validDataPath :: String,
-    modelPath :: String
-    -- definition of NN?
-  }
 
 data TrainData = TrainData
   { inTrain :: [Matrix Double],
@@ -105,6 +97,18 @@ data DataPaths = DataPaths
 data LinearLayerConfig = LinearLayerConfig
   { llIn :: Int,
     llOut :: Int,
-    llActivation :: String
+    llActivation :: Activation
+  }
+  deriving (Show)
+
+-- | The Experiment record type
+data Experiment = Experiment
+  { expName :: String,
+    expEpochs :: Int,
+    expBatchSize :: Int,
+    expLearningRate :: Double,
+    expDataPaths :: DataPaths,
+    expLossFunction :: Loss,
+    expArchitecture :: [LinearLayerConfig]
   }
   deriving (Show)

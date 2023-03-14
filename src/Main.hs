@@ -1,60 +1,78 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Main where
 
-import System.Environment (getArgs)
-import ParseInput (parseExperiment)
 import Activations (getActivation, getActivation')
 import LossFunction (getLoss, getLoss')
 import NeuralNetwork
   ( backward,
+    batchedTrainLoop,
+    createBatches,
     forward,
     gradientDescent,
     newB,
     newW,
     trainLoop,
     trainOneStep,
-    batchedTrainLoop,
-    createBatches,
   )
 import Numeric.LinearAlgebra as LA
+import ParseInput (parseExperiment)
+import System.Environment (getArgs)
+import System.Exit (exitFailure)
 import Types
   ( Activation (..),
     BackpropagationStore,
+    DataPaths (..),
     DeltasMatrix,
+    Experiment (..),
     Gradients,
     InMatrix,
     Layer (Layer, activation, biases, weights),
     LearningRate,
+    LinearLayerConfig (..),
     Loss (..),
     LossValue,
     NeuralNetwork,
     OutMatrix,
     TargetMatrix,
   )
-import System.Exit (exitFailure)
-
 
 -- TODO:
 -- 1. Read some `yaml` with NN specifications?
 --    * Three or two options: with Train, validation & test
 --    * [List] with layers and activations
---    * Loss function  
+--    * Loss function
 --    * Create NN from the config
 -- 2. Get file location with train data (and others)
--- 3. Print losses at the end of training 
+-- 3. Print losses at the end of training
 
+loadTargets :: Experiment -> IO (Matrix Double)
+loadTargets exp = loadMatrix $ dpTarget $ expDataPaths exp
+
+loadInputs :: Experiment -> IO (Matrix Double)
+loadInputs exp = loadMatrix $ dpInput $ expDataPaths exp
+
+-- creatBatches (expBatchSize exp) inputData
+-- creatBatches (expBatchSize exp) targetData
+
+-- TODO: IO...
+createLinearLayer :: LinearLayerConfig -> Layer
+createLinearLayer LinearLayerConfig {llIn, llOut, llActivation} = Layer {weights = newW (llIn, llOut), biases = newB llOut, activation = llActivation}
+
+createNN :: [LinearLayerConfig] -> NeuralNetwork
+createNN = map createLinearLayer
 
 main = do
-
   args <- getArgs
   case args of
     [filename] -> do
       input <- readFile filename
       case parseExperiment input of
-        Left err -> print err
-        Right exp -> print exp >> exitFailure
+        Left err -> print err >> exitFailure
+        Right exp -> exp
     _ -> putStrLn "Usage: myprogram [CONFIG]" >> exitFailure
 
-  trainData <- loadMatrix "data/iris/x.dat"
+  trainData <- loadTargets exp
   -- let trainData = trainData'
   targetData <- loadMatrix "data/iris/y.dat"
   -- let targetData = trainData'
@@ -103,8 +121,8 @@ getNN =
   let (nin, nout) = (3, 4)
       b = newB nout
       w = (nin >< nout) $ repeat 0.2
-      input = (20 >< nin) $ repeat 0.3 :: InMatrix Double
-      target = (20 >< nout) $ repeat 0.31 :: OutMatrix Double
+      input = (20 >< nin) $ repeat 0.3 :: InMatrix
+      target = (20 >< nout) $ repeat 0.31 :: OutMatrix
       neuralNetwork = [Layer {weights = w, biases = b, activation = Sigmoid}]
    in (neuralNetwork, input, target, getLoss' MSE)
 

@@ -10,11 +10,17 @@ import Types
 getActivation Relu = cRelu
 getActivation Sigmoid = cSigmoid
 getActivation Tanh = cTanh
+getActivation ID = id
 -- getActivation Softmax = cSoftmax
 
 getActivation' Relu = cRelu'
 getActivation' Sigmoid = cSigmoid'
 getActivation' Tanh = cTanh'
+getActivation' ID = cID' -- TODO: Return identity matrix?
+
+-- NOTE: This will work only for vectors!!
+cID' :: Matrix Double -> Matrix Double
+cID' x = (rows x><cols x) $ repeat 1.0
 
 -- getActivation' Softmax = softmax' -- TODO: Not implemented
 
