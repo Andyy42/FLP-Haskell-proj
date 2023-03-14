@@ -32,11 +32,13 @@ executable neuralNetworksProj
         Types
         LossFunction
         NeuralNetwork
+        ParseInput
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
       base ^>=4.15.1.0,
       hmatrix ^>= 0.20.2,
+      parsec ^>= 3.1.14.0,
     hs-source-dirs:   src 
     default-language: Haskell2010

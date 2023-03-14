@@ -11,6 +11,8 @@ module Types
     DeltasMatrix,
     LearningRate,
     LossValue,
+    DataPaths (..),
+    LinearLayerConfig (..),
   )
 where
 
@@ -89,5 +91,20 @@ data TrainData = TrainData
   { inTrain :: [Matrix Double],
     tgtTrain :: [Matrix Double],
     inValid :: [Matrix Double],
-    tgtValid :: [Matrix Double] 
+    tgtValid :: [Matrix Double]
   }
+
+-- | The DataPaths record type
+data DataPaths = DataPaths
+  { dpTarget :: String,
+    dpInput :: String
+  }
+  deriving (Show)
+
+-- | The Layer type
+data LinearLayerConfig = LinearLayerConfig
+  { llIn :: Int,
+    llOut :: Int,
+    llActivation :: String
+  }
+  deriving (Show)

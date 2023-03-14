@@ -1,5 +1,7 @@
 module Main where
 
+import System.Environment (getArgs)
+import ParseInput (parseExperiment)
 import Activations (getActivation, getActivation')
 import LossFunction (getLoss, getLoss')
 import NeuralNetwork
@@ -10,6 +12,8 @@ import NeuralNetwork
     newW,
     trainLoop,
     trainOneStep,
+    batchedTrainLoop,
+    createBatches,
   )
 import Numeric.LinearAlgebra as LA
 import Types
@@ -26,8 +30,30 @@ import Types
     OutMatrix,
     TargetMatrix,
   )
+import System.Exit (exitFailure)
+
+
+-- TODO:
+-- 1. Read some `yaml` with NN specifications?
+--    * Three or two options: with Train, validation & test
+--    * [List] with layers and activations
+--    * Loss function  
+--    * Create NN from the config
+-- 2. Get file location with train data (and others)
+-- 3. Print losses at the end of training 
+
 
 main = do
+
+  args <- getArgs
+  case args of
+    [filename] -> do
+      input <- readFile filename
+      case parseExperiment input of
+        Left err -> print err
+        Right exp -> print exp >> exitFailure
+    _ -> putStrLn "Usage: myprogram [CONFIG]" >> exitFailure
+
   trainData <- loadMatrix "data/iris/x.dat"
   -- let trainData = trainData'
   targetData <- loadMatrix "data/iris/y.dat"
@@ -40,13 +66,13 @@ main = do
   let epochs = 1000
 
   let lossFunction = MSE
-  let input = trainData
-  let target = targetData
+  let input = createBatches 5 trainData
+  let target = createBatches 5 targetData
   putStr $ show neuralNetwork
 
   let (pred0, _) = forward neuralNetwork trainData
 
-  putStrLn $ "Initial loss " ++ show (getLoss MSE pred0 $ targetData)
+  -- let (lossValue, trainedNN) = batchedTrainLoop epochs neuralNetwork MSE input target 0.01
   let (lossValue, trainedNN) = trainLoop epochs neuralNetwork MSE trainData targetData 0.01
   -- let (lossValue, trainedNN) = trainOneStep neuralNetwork MSE trainData targetData 0.01
 

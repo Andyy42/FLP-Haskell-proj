@@ -1,7 +1,9 @@
-import System.Environment (getArgs)
+module ParseInput (parseExperiment) where
+
+import Control.Monad (void)
 import Text.Parsec
 import Text.Parsec.String (Parser)
-import Control.Monad (void)
+import Types (DataPaths (..), LinearLayerConfig (..))
 
 -- | The Experiment record type
 data Experiment = Experiment
@@ -11,22 +13,7 @@ data Experiment = Experiment
     expLearningRate :: Double,
     expDataPaths :: DataPaths,
     expLossFunction :: String,
-    expArchitecture :: [Layer]
-  }
-  deriving (Show)
-
--- | The DataPaths record type
-data DataPaths = DataPaths
-  { dpTarget :: String,
-    dpInput :: String
-  }
-  deriving (Show)
-
--- | The Layer type
-data Layer = LinearLayer
-  { llIn :: Int,
-    llOut :: Int,
-    llActivation :: String
+    expArchitecture :: [LinearLayerConfig]
   }
   deriving (Show)
 
@@ -62,7 +49,7 @@ dataPathsParser = do
   return $ DataPaths target input
 
 -- | Parse a Layer block
-layerParser :: Parser Layer
+layerParser :: Parser LinearLayerConfig
 layerParser = do
   string "{"
   spaces
@@ -78,26 +65,20 @@ layerParser = do
   spaces
   string "}"
   spaces
-  return $ LinearLayer inSize outSize activation
+  return $ LinearLayerConfig inSize outSize activation
 
 -- | Parse an Experiment block
 experimentParser :: Parser Experiment
 experimentParser = do
   string "Experiment {"
   spaces
-  name <- string "name:" *> spaces *> quotedString <* char '\n'
-  spaces
-  epochs <- string "epochs:" *> spaces *> int <* char '\n'
-  spaces
-  batchSize <- string "batchSize:" *> spaces *> int <* char '\n'
-  spaces
-  learningRate <- string "learningRate:" *> spaces *> double <* char '\n'
-  spaces
-  dataPaths <- dataPathsParser <* char '\n'
-  spaces
-  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* char '\n'
-  spaces
-  architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace*> char ']') (many layerParser) <* char '\n'
+  name <- string "name:" *> spaces *> quotedString <* char '\n' <* spaces
+  epochs <- string "epochs:" *> spaces *> int <* char '\n' <* spaces
+  batchSize <- string "batchSize:" *> spaces *> int <* char '\n' <* spaces
+  learningRate <- string "learningRate:" *> spaces *> double <* char '\n' <* spaces
+  dataPaths <- dataPathsParser <* char '\n' <* spaces
+  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* char '\n' <* spaces
+  architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* char '\n'
   spaces
   string "}"
   return $ Experiment name epochs batchSize learningRate dataPaths lossFunction architecture
@@ -106,14 +87,3 @@ experimentParser = do
 parseExperiment :: String -> Either ParseError Experiment
 parseExperiment input = parse experimentParser "" input
 
-
-main :: IO ()
-main = do
-  args <- getArgs
-  case args of
-    [filename] -> do
-      input <- readFile filename
-      case parseExperiment input of
-        Left err -> print err
-        Right exp -> print exp
-    _ -> putStrLn "Usage: myprogram config.txt"
