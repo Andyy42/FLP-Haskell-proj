@@ -23,7 +23,7 @@ fromStrLoss :: String -> Loss
 fromStrLoss val
   | val `elem` ["mse", "MSE"] = MSE
   | val `elem` ["CrossEntropy", "CE", "ce"] = CrossEntropy
-  | otherwise = MSE  -- TODO: Throw error
+  | otherwise = MSE -- TODO: Throw error
 
 -- | Parse an integer
 int :: Parser Int

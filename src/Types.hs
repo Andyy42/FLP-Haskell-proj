@@ -68,7 +68,7 @@ type NeuralNetwork = [Layer]
 -- Gradients for biases 'db' and weights 'dw"
 data Gradients = Gradients
   { dbGradient :: Matrix Double,
-    dwGradient :: Matrix Double 
+    dwGradient :: Matrix Double
   }
   deriving (Show)
 

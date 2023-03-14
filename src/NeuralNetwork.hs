@@ -120,10 +120,10 @@ makeSplit ratio m = splitRowsAt n m
 ----------------------------------------
 -- FORWARD PASS
 
-forward :: NeuralNetwork -> InMatrix -> (OutMatrix , [BackpropagationStore ])
+forward :: NeuralNetwork -> InMatrix -> (OutMatrix, [BackpropagationStore])
 forward layers z_in = forwardPass layers z_in []
 
-forwardPass :: NeuralNetwork -> InMatrix -> [BackpropagationStore ] -> (OutMatrix , [BackpropagationStore ])
+forwardPass :: NeuralNetwork -> InMatrix -> [BackpropagationStore] -> (OutMatrix, [BackpropagationStore])
 forwardPass (layer : layers) z_in backpropStores =
   let u = z_in LA.<> weights layer
       f = activationFun layer
@@ -135,12 +135,12 @@ forwardPass [] z_in backpropStores = (z_in, backpropStores)
 ----------------------------------------
 -- BACKWARD PASS
 
-backward :: NeuralNetwork -> [BackpropagationStore ] -> DeltasMatrix -> (DeltasMatrix , [Gradients ])
+backward :: NeuralNetwork -> [BackpropagationStore] -> DeltasMatrix -> (DeltasMatrix, [Gradients])
 backward layers backpropStores delta = backwardPass (reverse layers) backpropStores delta []
 
 -- delta w.r.t. current layer
 -- delta: row vector
-backwardPass :: NeuralNetwork -> [BackpropagationStore ] -> DeltasMatrix -> [Gradients ] -> (DeltasMatrix , [Gradients ])
+backwardPass :: NeuralNetwork -> [BackpropagationStore] -> DeltasMatrix -> [Gradients] -> (DeltasMatrix, [Gradients])
 backwardPass (layer : layers) (store : backpropStores) delta gradients =
   let f' = activationFun' layer $ currentLayerU store -- data in cols (if batched dim is 'batch_size x data')
       delta_times_f' = hadamardProduct delta f'
@@ -160,7 +160,7 @@ backwardPass _ [] delta gradients = (delta, gradients)
 ----------------------------------------
 -- STOCHASTIC GRADIENT DESCENT (SGD)
 
-gradientDescent :: NeuralNetwork -> [Gradients ] -> LearningRate -> NeuralNetwork 
+gradientDescent :: NeuralNetwork -> [Gradients] -> LearningRate -> NeuralNetwork
 gradientDescent (layer : layers) (grad : gradients) lr =
   Layer
     { weights = weights layer - (lr `scale` dwGradient grad),
@@ -174,7 +174,7 @@ gradientDescent _ [] _ = []
 ----------------------------------------
 -- TRAINING FUNCTIONS
 
-trainOneStep :: NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork )
+trainOneStep :: NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork)
 trainOneStep neuralNetwork lossFunction input target lr =
   let (output, backpropStore) = forward neuralNetwork input
       lossValue = getLoss lossFunction output target
@@ -184,19 +184,19 @@ trainOneStep neuralNetwork lossFunction input target lr =
    in (lossValue, updatedNeuralNetwork)
 
 --  take epochs $
-trainLoop :: Int -> NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork )
+trainLoop :: Int -> NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork)
 trainLoop epochs neuralNetwork lossFun trainData targetData lr = last $ take epochs $ iterate trainStep (0.0, neuralNetwork)
   where
     trainStep (_, nn) = trainOneStep nn lossFun trainData targetData lr
 
-batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> [InMatrix ] -> [TargetMatrix ] -> LearningRate -> (LossValue, NeuralNetwork )
+batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
 batchedTrainLoop epochs neuralNetwork lossFun trainData targetData lr = train
   where
     train = (batchLoss / fromIntegral (length trainData), trainedNN) -- Just averages batchLoss and returns the tuple..
     (batchLoss, trainedNN) = last $ take epochs $ iterate trainStep (0.0, neuralNetwork) -- Iterate trainStep epochs times feeding it it's output as input
     trainStep (lossValue, nn) = batchedTrain nn lossFun trainData targetData lr -- Batched train step, trains for one epoch on whole batch
 
-batchedTrain :: NeuralNetwork -> Loss -> [InMatrix ] -> [TargetMatrix ] -> LearningRate -> (LossValue, NeuralNetwork )
+batchedTrain :: NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
 batchedTrain neuralNetwork lossFun (x : xs) (t : ts) lr =
   let (accLossValue, accNN) = batchedTrain neuralNetwork lossFun xs ts lr -- recursively call batchedTrain' until we hit base case
       (lossValue, newNN) = trainOneStep accNN lossFun x t lr -- trainOneStep with 'accNN'
@@ -209,14 +209,15 @@ batchedTrain neuralNetwork lossFun _ _ lr = (0, neuralNetwork) -- base case (not
 -- EVALUATE LOSS (sample per sample)
 
 evaluateLoss :: NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> Double
-evaluateLoss nn lossFun xxs tts = (/n) $ evaluateLoss' nn lossFun xxs tts
-  where n = fromIntegral $ rows xxs
+evaluateLoss nn lossFun xxs tts = (/ n) $ evaluateLoss' nn lossFun xxs tts
+  where
+    n = fromIntegral $ rows xxs
 
 evaluateLoss' :: NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> Double
-evaluateLoss' nn lossFun xxs tts 
+evaluateLoss' nn lossFun xxs tts
   | rows xxs == 0 = 0.0
   | otherwise = getLoss lossFun nnOut t + evaluateLoss nn lossFun xs ts
-  where 
-    (x,xs) = splitRowsAt 1 xxs
-    (t,ts) = splitRowsAt 1 tts 
-    (nnOut, _ ) = forward nn x 
+  where
+    (x, xs) = splitRowsAt 1 xxs
+    (t, ts) = splitRowsAt 1 tts
+    (nnOut, _) = forward nn x
