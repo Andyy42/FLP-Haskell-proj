@@ -17,7 +17,7 @@ module Types
   )
 where
 
-import Numeric.LinearAlgebra (Matrix, cols, rows)
+import           Numeric.LinearAlgebra (Matrix, cols, rows)
 
 type InMatrix = Matrix Double
 
@@ -41,8 +41,8 @@ data Loss = MSE | CrossEntropy deriving (Show)
 
 -- Layer containes:   weights,   biases,   activation (non-linearity)
 data Layer = Layer
-  { weights :: Matrix Double,
-    biases :: Matrix Double,
+  { weights    :: Matrix Double,
+    biases     :: Matrix Double,
     activation :: Activation
   }
 
@@ -73,41 +73,41 @@ data Gradients = Gradients
   deriving (Show)
 
 data BackpropagationStore = BackpropagationStore
-  { prevLayerZ :: Matrix Double,
+  { prevLayerZ    :: Matrix Double,
     currentLayerU :: Matrix Double
   }
 
 -- type BackpropagationStoreValues a = [BackpropagationStore a]
 
 data TrainData = TrainData
-  { inTrain :: [Matrix Double],
+  { inTrain  :: [Matrix Double],
     tgtTrain :: [Matrix Double],
-    inValid :: [Matrix Double],
+    inValid  :: [Matrix Double],
     tgtValid :: [Matrix Double]
   }
 
 -- | The DataPaths record type
 data DataPaths = DataPaths
   { dpTarget :: String,
-    dpInput :: String
+    dpInput  :: String
   }
   deriving (Show)
 
 -- | The Layer type
 data LinearLayerConfig = LinearLayerConfig
-  { llIn :: Int,
-    llOut :: Int,
+  { llIn         :: Int,
+    llOut        :: Int,
     llActivation :: Activation
   }
   deriving (Show)
 
 -- | The Experiment record type
 data Experiment = Experiment
-  { expName :: String,
-    expEpochs :: Int,
-    expBatchSize :: Int,
+  { expName         :: String,
+    expEpochs       :: Int,
+    expBatchSize    :: Int,
     expLearningRate :: Double,
-    expDataPaths :: DataPaths,
+    expDataPaths    :: DataPaths,
     expLossFunction :: Loss,
     expArchitecture :: [LinearLayerConfig]
   }

@@ -8,26 +8,21 @@ module NeuralNetwork
     createBatches,
     newB,
     newW,
+    newWAllSame
   )
 where
 
-import Activations (getActivation, getActivation')
-import LossFunction (getLoss, getLoss')
-import Numeric.LinearAlgebra as LA
-import Types
-  ( Activation (..),
-    BackpropagationStore (..),
-    DeltasMatrix,
-    Gradients (..),
-    InMatrix,
-    Layer (Layer, activation, biases, weights),
-    LearningRate,
-    Loss (..),
-    LossValue,
-    NeuralNetwork,
-    OutMatrix,
-    TargetMatrix,
-  )
+import           Activations           (getActivation, getActivation')
+import           LossFunction          (getLoss, getLoss')
+import           Numeric.LinearAlgebra as LA
+import           Types                 (Activation (..),
+                                        BackpropagationStore (..), DeltasMatrix,
+                                        Gradients (..), InMatrix,
+                                        Layer (Layer, activation, biases, weights),
+                                        LearningRate, Loss (..), LossValue,
+                                        NeuralNetwork, OutMatrix, TargetMatrix)
+
+import           System.Random
 
 -- Approach 1
 -- do forward and collect values for each layer
@@ -69,12 +64,19 @@ linearW' delta prevZ = cmap (/ batchSize) (tr' prevZ LA.<> delta)
 ----------------------------------------
 -- INITIALIZATION (weghts & biases)
 
--- New weights
-newW :: (Int, Int) -> IO (Matrix Double)
-newW (nin, nout) = do
+-- New weights where all the digits are same
+newWAllSame:: (Int, Int) -> Double -> Matrix Double
+newWAllSame (nin, nout) num =
   let k = sqrt (1.0 / fromIntegral nin)
-  w <- randn nin nout
-  return (cmap (k *) w)
+      w = (nin><nout) $ repeat num
+  in cmap (k *) w
+
+-- New weights
+newW :: (Int, Int) -> Int -> Matrix Double
+newW (nin, nout) seed =
+  let k = sqrt (1.0 / fromIntegral nin)
+      w = (nin><nout) $ randoms (mkStdGen seed)
+  in cmap (k *) w
 
 -- New biases
 newB :: Int -> Matrix Double
@@ -174,6 +176,7 @@ gradientDescent _ [] _ = []
 ----------------------------------------
 -- TRAINING FUNCTIONS
 
+-- TODO: Should not return lossValue as its loss value of and old NN before the update (one-step training!!!)
 trainOneStep :: NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork)
 trainOneStep neuralNetwork lossFunction input target lr =
   let (output, backpropStore) = forward neuralNetwork input
@@ -183,18 +186,10 @@ trainOneStep neuralNetwork lossFunction input target lr =
       updatedNeuralNetwork = gradientDescent neuralNetwork gradients lr
    in (lossValue, updatedNeuralNetwork)
 
---  take epochs $
 trainLoop :: Int -> NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork)
 trainLoop epochs neuralNetwork lossFun trainData targetData lr = last $ take epochs $ iterate trainStep (0.0, neuralNetwork)
   where
     trainStep (_, nn) = trainOneStep nn lossFun trainData targetData lr
-
-batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
-batchedTrainLoop epochs neuralNetwork lossFun trainData targetData lr = train
-  where
-    train = (batchLoss / fromIntegral (length trainData), trainedNN) -- Just averages batchLoss and returns the tuple..
-    (batchLoss, trainedNN) = last $ take epochs $ iterate trainStep (0.0, neuralNetwork) -- Iterate trainStep epochs times feeding it it's output as input
-    trainStep (lossValue, nn) = batchedTrain nn lossFun trainData targetData lr -- Batched train step, trains for one epoch on whole batch
 
 batchedTrain :: NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
 batchedTrain neuralNetwork lossFun (x : xs) (t : ts) lr =
@@ -203,7 +198,14 @@ batchedTrain neuralNetwork lossFun (x : xs) (t : ts) lr =
    in (accLossValue + lossValue, newNN)
 batchedTrain neuralNetwork lossFun _ _ lr = (0, neuralNetwork) -- base case (nothing to train)
 
--- TODO: Batched train loop
+batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
+batchedTrainLoop epochs neuralNetwork lossFun trainData targetData lr = train
+  where
+    train = (batchLoss / fromIntegral (length trainData), trainedNN) -- Just averages batchLoss and returns the tuple..
+    (batchLoss, trainedNN) = last $ take epochs $ iterate trainStep (0.0, neuralNetwork) -- Iterate trainStep epochs times feeding it it's output as input
+    trainStep (lossValue, nn) = batchedTrain nn lossFun trainData targetData lr -- Batched train step, trains for one epoch on whole batch
+
+-- TODO: Update (forward backward) all in one!!!
 
 ----------------------------------------
 -- EVALUATE LOSS (sample per sample)
