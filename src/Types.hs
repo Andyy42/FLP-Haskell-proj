@@ -48,10 +48,10 @@ data Layer = Layer
 
 instance Show Layer where
   show layer =
-    "LinearLayer: out="
-      ++ show (cols $ weights layer)
-      ++ " in="
+    "LinearLayer: in="
       ++ show (rows $ weights layer)
+      ++ " out="
+      ++ show (cols $ weights layer)
       ++ "\n"
       ++ "   Activation:"
       ++ show (activation layer)
@@ -76,6 +76,7 @@ data BackpropagationStore = BackpropagationStore
   { prevLayerZ    :: Matrix Double,
     currentLayerU :: Matrix Double
   }
+  deriving (Show)
 
 -- type BackpropagationStoreValues a = [BackpropagationStore a]
 
@@ -105,6 +106,7 @@ data LinearLayerConfig = LinearLayerConfig
 data Experiment = Experiment
   { expName         :: String,
     expEpochs       :: Int,
+    expSeed         :: Int,
     expBatchSize    :: Int,
     expLearningRate :: Double,
     expDataPaths    :: DataPaths,

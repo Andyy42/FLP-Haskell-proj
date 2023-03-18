@@ -1,16 +1,21 @@
 module ParseInput (parseExperiment) where
 
-import Control.Monad (void)
-import Text.Parsec
-import Text.Parsec.String (Parser)
-import Types (Activation (..), DataPaths (..), Experiment (..), LinearLayerConfig (..), Loss (..))
+import           Control.Monad      (void)
+import           Text.Parsec
+import           Text.Parsec.String (Parser)
+import           Types              (Activation (..), DataPaths (..),
+                                     Experiment (..), LinearLayerConfig (..),
+                                     Loss (..))
 
 -- | Parse a string enclosed in double quotes
 quotedString :: Parser String
 quotedString = char '"' *> manyTill anyChar (try $ char '"')
 
 whitespace :: Parser ()
-whitespace = void $ many $ oneOf " \n\t"
+whitespace = void $ many $ oneOf " \n\t" 
+
+endline :: Parser ()
+endline = void $ many $ oneOf " \t" <* char '\n'
 
 fromStrActivation :: String -> Activation
 fromStrActivation val
@@ -42,9 +47,9 @@ dataPathsParser :: Parser DataPaths
 dataPathsParser = do
   string "DataPaths {"
   spaces
-  target <- string "target:" *> spaces *> quotedString <* char '\n'
+  target <- string "target:" *> spaces *> quotedString <* endline
   spaces
-  input <- string "input:" *> spaces *> quotedString <* char '\n'
+  input <- string "input:" *> spaces *> quotedString <* endline
   spaces
   string "}"
   return $ DataPaths target input
@@ -56,11 +61,11 @@ layerParser = do
   spaces
   string "LinearLayer {"
   spaces
-  inSize <- string "in:" *> spaces *> int <* char '\n'
+  inSize <- string "in:" *> spaces *> int <* endline
   spaces
-  outSize <- string "out:" *> spaces *> int <* char '\n'
+  outSize <- string "out:" *> spaces *> int <* endline
   spaces
-  activation <- string "activation:" *> spaces *> quotedString <* char '\n'
+  activation <- string "activation:" *> spaces *> quotedString <* endline
   spaces
   string "}"
   spaces
@@ -73,16 +78,17 @@ experimentParser :: Parser Experiment
 experimentParser = do
   string "Experiment {"
   spaces
-  name <- string "name:" *> spaces *> quotedString <* char '\n' <* spaces
-  epochs <- string "epochs:" *> spaces *> int <* char '\n' <* spaces
-  batchSize <- string "batchSize:" *> spaces *> int <* char '\n' <* spaces
-  learningRate <- string "learningRate:" *> spaces *> double <* char '\n' <* spaces
-  dataPaths <- dataPathsParser <* char '\n' <* spaces
-  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* char '\n' <* spaces
+  name <- string "name:" *> spaces *> quotedString <* endline  <* spaces
+  epochs <- string "epochs:" *> spaces *> int <* endline   <* spaces
+  seed <- string "seed:" *> spaces *> int <* endline <* spaces
+  batchSize <- string "batchSize:" *> spaces *> int <* endline  <* spaces
+  learningRate <- string "learningRate:" *> spaces *> double <* endline  <* spaces
+  dataPaths <- dataPathsParser <* endline <* spaces
+  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* endline <* spaces
   architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* char '\n'
   spaces
   string "}"
-  return $ Experiment name epochs batchSize learningRate dataPaths (fromStrLoss lossFunction) architecture
+  return $ Experiment name epochs seed batchSize learningRate dataPaths (fromStrLoss lossFunction) architecture
 
 -- | Parse a configuration file and return an Experiment record
 parseExperiment :: String -> Either ParseError Experiment

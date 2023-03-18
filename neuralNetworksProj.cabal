@@ -40,6 +40,7 @@ executable neuralNetworksProj
       base ^>=4.15.1.0,
       hmatrix ^>= 0.20.2,
       parsec ^>= 3.1.14.0,
-      random ^>= 1.2.1.1 
+      random ^>= 1.2.1.1,
+      array ^>= 0.5.4.0 
     hs-source-dirs:   src 
     default-language: Haskell2010

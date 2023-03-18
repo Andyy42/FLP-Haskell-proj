@@ -98,16 +98,17 @@ Now let's look closely at term $\frac{\partial\mathbf{u}^{(\ell)}}{\partial\math
 $$
 \frac{\partial\mathbf{u}^{(\ell)}}{\partial\mathbf{z}^{(\ell-1)}}=
 \frac{\partial}{{\partial\mathbf{z}^{(\ell-1)}}}\Bigl(
-\mathbf{W^{(\ell)}}\mathbf{z^{(\ell-1)}} + \mathbf{b^{(\ell)}}\Bigr)
+\mathbf{z}^{(\ell-1)}
+\mathbf{W^{(\ell)}} + \mathbf{b^{(\ell)}}\Bigr)
 =
-\frac{\partial \bigl(\mathbf{W^{(\ell)}}\mathbf{z^{(\ell-1)}}\bigr)}{{\partial\mathbf{z}^{(\ell-1)}}} + 0 = \mathbf{W^{(\ell)}}
+\frac{\partial \bigl(\mathbf{z}^{(\ell-1)} \mathbf{W^{(\ell)}}\bigr)}{{\partial\mathbf{z}^{(\ell-1)}}} + 0 = \bigl(\mathbf{W^{(\ell)}}\bigr)^T
 $$
 
 Putting it together we got
 
 $$
 \frac{\partial\mathbf{z}^{(\ell)}}{\partial\mathbf{z}^{(\ell-1)}}= f'(\mathbf{u^{(\ell)}}) \mathbf{W^{(\ell)}}=
-\mathbf{F}^{(\ell)}\mathbf{W^{(\ell)}}
+\mathbf{F}^{(\ell)}\bigl(\mathbf{W^{(\ell)}}\bigr)^T
 $$
 
 Also note that this equations shows how is single output of current layer $\ell$ is influenced by changes in the previous layer $\ell-1$:
@@ -209,7 +210,7 @@ $$
 \delta^{(\ell)} =
 \delta^{(\ell+1)}
 \frac{{\partial\mathbf{z}^{(\ell+1)}}}{\partial\mathbf{z}^{(\ell)}} =
-\delta^{(\ell+1)} \mathbf{F}^{(\ell+1)} \mathbf{W^{(\ell+1)}}
+\delta^{(\ell+1)} \mathbf{F}^{(\ell+1)}\bigl( \mathbf{W^{(\ell+1)}}\bigr)^T
 $$
 
 Now let's get back to the dreaded 3rd order tensor $\frac{\partial\mathbf{z}^{(\ell)}}{\partial\mathbf{W}^{(\ell)}}$ and see what we can do with it by expanding it in $\frac{\partial{E}}{\partial\mathbf{z}^{(\ell)}}$ as
