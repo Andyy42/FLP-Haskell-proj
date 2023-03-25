@@ -4,14 +4,16 @@ module LossFunction
   )
 where
 
-import Numeric.LinearAlgebra as La
-import Types
+import           Numeric.LinearAlgebra as La
+import           Types
 
-getLoss MSE = mse
-getLoss CrossEntropy = crossEntropy
+getLoss loss = case loss of
+    MSE          -> mse
+    CrossEntropy -> crossEntropy
 
-getLoss' MSE = mse'
-getLoss' CrossEntropy = crossEntropy'
+getLoss' loss = case loss of
+    MSE          ->  mse'
+    CrossEntropy -> crossEntropy'
 
 -- MSE (Mean squared error) sum \sum_k(t_k-y_k)^2
 mse :: Matrix Double -> Matrix Double -> Double

@@ -12,10 +12,13 @@ quotedString :: Parser String
 quotedString = char '"' *> manyTill anyChar (try $ char '"')
 
 whitespace :: Parser ()
-whitespace = void $ many $ oneOf " \n\t" 
+whitespace = void $ many $ oneOf " \n\t"
 
 endline :: Parser ()
 endline = void $ many $ oneOf " \t" <* char '\n'
+
+spacedEndline :: Parser ()
+spacedEndline = spaces <* endline <* spaces
 
 fromStrActivation :: String -> Activation
 fromStrActivation val
@@ -47,10 +50,8 @@ dataPathsParser :: Parser DataPaths
 dataPathsParser = do
   string "DataPaths {"
   spaces
-  target <- string "target:" *> spaces *> quotedString <* endline
-  spaces
-  input <- string "input:" *> spaces *> quotedString <* endline
-  spaces
+  target <- string "target:" *> spaces *> quotedString <* spacedEndline
+  input <- string "input:" *> spaces *> quotedString <* spacedEndline
   string "}"
   return $ DataPaths target input
 
@@ -61,31 +62,29 @@ layerParser = do
   spaces
   string "LinearLayer {"
   spaces
-  inSize <- string "in:" *> spaces *> int <* endline
-  spaces
-  outSize <- string "out:" *> spaces *> int <* endline
-  spaces
-  activation <- string "activation:" *> spaces *> quotedString <* endline
-  spaces
+  inSize <- string "in:" *> spaces *> int <* spacedEndline
+  outSize <- string "out:" *> spaces *> int <* spacedEndline
+  activation <- string "activation:" *> spaces *> quotedString <* spacedEndline
   string "}"
   spaces
   string "}"
   spaces
   return $ LinearLayerConfig inSize outSize $ fromStrActivation activation
 
+
 -- | Parse an Experiment block
 experimentParser :: Parser Experiment
 experimentParser = do
   string "Experiment {"
   spaces
-  name <- string "name:" *> spaces *> quotedString <* endline  <* spaces
-  epochs <- string "epochs:" *> spaces *> int <* endline   <* spaces
-  seed <- string "seed:" *> spaces *> int <* endline <* spaces
-  batchSize <- string "batchSize:" *> spaces *> int <* endline  <* spaces
-  learningRate <- string "learningRate:" *> spaces *> double <* endline  <* spaces
-  dataPaths <- dataPathsParser <* endline <* spaces
-  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* endline <* spaces
-  architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* char '\n'
+  name <- string "name:" *> spaces *> quotedString <* spacedEndline
+  epochs <- string "epochs:" *> spaces *> int <* spacedEndline
+  seed <- string "seed:" *> spaces *> int <* spacedEndline
+  batchSize <- string "batchSize:" *> spaces *> int <* spacedEndline
+  learningRate <- string "learningRate:" *> spaces *> double <* spacedEndline
+  dataPaths <- dataPathsParser <* spacedEndline
+  lossFunction <- string "lossFunction:" *> spaces *> quotedString <* spacedEndline
+  architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* spacedEndline
   spaces
   string "}"
   return $ Experiment name epochs seed batchSize learningRate dataPaths (fromStrLoss lossFunction) architecture

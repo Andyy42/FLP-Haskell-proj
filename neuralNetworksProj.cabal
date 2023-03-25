@@ -33,6 +33,7 @@ executable neuralNetworksProj
         LossFunction
         NeuralNetwork
         ParseInput
+        Experiments
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

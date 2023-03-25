@@ -11,9 +11,12 @@ module Types
     DeltasMatrix,
     LearningRate,
     LossValue,
+    BatchedData,
+    NotBatchedData,
     DataPaths (..),
     LinearLayerConfig (..),
     Experiment (..),
+    Datas(..)
   )
 where
 
@@ -79,6 +82,10 @@ data BackpropagationStore = BackpropagationStore
   deriving (Show)
 
 -- type BackpropagationStoreValues a = [BackpropagationStore a]
+
+type BatchedData = ([InMatrix],[OutMatrix])
+type NotBatchedData = (InMatrix, OutMatrix)
+data Datas = BatchedData BatchedData  | NotBatchedData NotBatchedData
 
 data TrainData = TrainData
   { inTrain  :: [Matrix Double],

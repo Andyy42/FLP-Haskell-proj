@@ -10,7 +10,7 @@ module NeuralNetwork
     newW,
     newWAllSame,
     evaluateLoss,
-    evaluateLossBatched
+    evaluateAccuracy
   )
 where
 
@@ -18,8 +18,8 @@ import           Activations           (getActivation, getActivation')
 import           LossFunction          (getLoss, getLoss')
 import           Numeric.LinearAlgebra as LA
 import           Types                 (Activation (..),
-                                        BackpropagationStore (..), DeltasMatrix,
-                                        Gradients (..), InMatrix,
+                                        BackpropagationStore (..), Datas (..),
+                                        DeltasMatrix, Gradients (..), InMatrix,
                                         Layer (Layer, activation, biases, weights),
                                         LearningRate, Loss (..), LossValue,
                                         NeuralNetwork, OutMatrix, TargetMatrix)
@@ -27,9 +27,12 @@ import           Types                 (Activation (..),
 import           Control.Monad
 import           Control.Monad.ST
 import           Data.Array.ST
+import           Data.List
 import           Data.STRef
 import           System.Random
 
+------------------------------------------------------------
+------------------------------------------------------------
 ------------------------------------------------------------
 -- Taken from: https://wiki.haskell.org/Random_shuffle
 -- https://okmij.org/ftp/Haskell/perfect-shuffle.txt
@@ -55,6 +58,8 @@ shuffle' xs gen = runST (do
     n = length xs
     newArray :: Int -> [a] -> ST s (STArray s Int a)
     newArray n xs =  newListArray (1,n) xs
+------------------------------------------------------------
+------------------------------------------------------------
 ------------------------------------------------------------
 
 -- Approach 1
@@ -137,7 +142,9 @@ splitRowsAt :: Element t => Int -> Matrix t -> (Matrix t, Matrix t)
 splitRowsAt n m = (takeRows n m, dropRows n m)
 
 createBatches :: Int -> Matrix Double -> [Matrix Double]
-createBatches n m = if rows m /= 0 then takeRows n m : createBatches n (dropRows n m) else []
+createBatches n m = if rows m /= 0 then takeRows nn m : createBatches n (dropRows n m) else []
+  where nn = min (rows m) n
+  -- NOTE: Taking more then 'nn' causes neuralNetworksProj: wrong subMatrix ((0,0),(16,4)) of (6x4)
 
 --  train, validation, test split
 createDataSplit :: (Double, Double, Double) -> Matrix Double -> (Matrix Double, Matrix Double, Matrix Double)
@@ -219,63 +226,84 @@ trainOneStep neuralNetwork lossFunction input target lr =
       updatedNeuralNetwork = gradientDescent neuralNetwork gradients lr
    in (lossValue, updatedNeuralNetwork)
 
-trainLoop :: Int -> NeuralNetwork -> Loss -> InMatrix -> TargetMatrix -> LearningRate -> (LossValue, NeuralNetwork)
-trainLoop epochs neuralNetwork lossFun input tgt lr = last $ take epochs $ iterate trainStep (0.0, neuralNetwork)
+trainLoop :: Int -> NeuralNetwork -> Loss -> Datas -> LearningRate -> (LossValue, NeuralNetwork)
+trainLoop epochs neuralNetwork lossFun (NotBatchedData (input,tgt)) lr = last $ take epochs $ iterate trainStep (0.0, neuralNetwork)
   where
     trainStep (_, nn) = trainOneStep nn lossFun input tgt lr
 
-batchedTrain :: NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
-batchedTrain neuralNetwork lossFun input tgt lr =
-  foldr (\(x,t) (_, nn) -> trainOneStep nn lossFun x t lr) (0, neuralNetwork) (zip input tgt)
-
-batchedTrainLoopNoShuffle :: Int -> NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> (LossValue, NeuralNetwork)
-batchedTrainLoopNoShuffle epochs nn lossFun input tgt lr = train
+trainLoop epochs nn lossFun (BatchedData datas@(input,tgt)) lr = train
   where
     train = (batchLoss / fromIntegral (length input), trainedNN) -- Just averages batchLoss and returns the tuple..
     (batchLoss, trainedNN) = last $ take epochs $ iterate trainStep (0.0, nn) -- Iterate trainStep epochs times feeding it it's output as input
-    trainStep (lossValue, nn) = batchedTrain nn lossFun input tgt lr -- Batched train step, trains for one epoch on whole batch
+    trainStep (lossValue, nn) = batchedTrain nn lossFun datas lr -- Batched train step, trains for one epoch on whole batch
 
 
-batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate -> Int -> (LossValue, NeuralNetwork)
-batchedTrainLoop epochs nn lossFun input tgt lr seed = (batchLoss / fromIntegral (length input), trainedNN) -- Just averages batchLoss and returns the tuple..
+batchedTrain :: NeuralNetwork -> Loss -> ([InMatrix],[TargetMatrix]) -> LearningRate -> (LossValue, NeuralNetwork)
+batchedTrain neuralNetwork lossFun (input,tgt) lr =
+  foldr (\(x,t) (_, nn) -> trainOneStep nn lossFun x t lr) (0, neuralNetwork) (zip input tgt)
+
+
+batchedTrainLoop :: Int -> NeuralNetwork -> Loss -> ([InMatrix],[TargetMatrix]) -> LearningRate -> Int -> (LossValue, NeuralNetwork)
+batchedTrainLoop epochs nn lossFun datas@(input,tgt) lr seed = (batchLoss / fromIntegral (length input), trainedNN) -- Just averages batchLoss and returns the tuple..
   where
     (batchLoss, trainedNN) = last $ take epochs iterateTrainStep' -- Iterate trainStep epochs times
-    iterateTrainStep'= iterateTrainStep (0.0, nn) lossFun input tgt lr (mkStdGen seed)
+    iterateTrainStep'= iterateTrainStep (0.0, nn) lossFun datas lr (mkStdGen seed)
 
-iterateTrainStep:: (Double, NeuralNetwork) -> Loss -> [InMatrix] -> [TargetMatrix] -> LearningRate ->StdGen -> [(LossValue, NeuralNetwork)]
-iterateTrainStep (lossValue, nn) lossFun input tgt lr g= (newLossValue, newNN) : nextTrainStep
+iterateTrainStep:: (Double, NeuralNetwork) -> Loss -> ([InMatrix],[TargetMatrix]) -> LearningRate ->StdGen -> [(LossValue, NeuralNetwork)]
+iterateTrainStep (lossValue, nn) lossFun datas@(input,tgt) lr g= (newLossValue, newNN) : nextTrainStep
   where
-    (newLossValue, newNN) = batchedTrain nn lossFun input tgt lr -- Batched train step, trains for one epoch on whole batch
+    (newLossValue, newNN) = batchedTrain nn lossFun datas lr -- Batched train step, trains for one epoch on whole batch
     (shuffledInput,_) = shuffle' input g -- Randmoly shuffle data with random generator g
     (shuffledTgt,newG) = shuffle'  tgt g
-    nextTrainStep = iterateTrainStep (lossValue, newNN) lossFun shuffledInput shuffledTgt lr newG
+    nextTrainStep = iterateTrainStep (lossValue, newNN) lossFun (shuffledInput,shuffledTgt) lr newG
 
 
 -- TODO: Update (forward backward) all in one!!!
 
-----------------------------------------
--- EVALUATE LOSS (sample per sample)
+-----------------------------------------------
+-- EVALUATE LOSS (batched or sample per sample)
 
 
-evaluateLossBatched :: NeuralNetwork -> Loss -> ([InMatrix], [OutMatrix]) -> Double
-evaluateLossBatched nn lossFun (inputs,targets) = if n > 0 then (/n) $ foldr eval 0.0 $ zip inputs targets else 0.0
+evaluateLoss:: NeuralNetwork -> Loss -> Datas -> Double
+evaluateLoss nn lossFun (BatchedData (inputs,targets)) = if n > 0 then (/n) $ foldr eval 0.0 $ zip inputs targets else 0.0
   where
-    eval e acc = evaluateLoss nn lossFun e + acc
+    eval e acc = evaluateLoss nn lossFun (NotBatchedData e) + acc
     n = fromIntegral $ length inputs
 
-evaluateLoss :: NeuralNetwork -> Loss -> (InMatrix, OutMatrix) -> Double
-evaluateLoss nn lossFun datas@(xxs,tts) = if n > 0 then (/n) $ evaluateLoss' nn lossFun datas else 0.0
+evaluateLoss nn lossFun (NotBatchedData datas@(xxs,tts)) = if n > 0 then (/n) $ evaluateLoss' nn lossFun datas else 0.0
   where
     n = fromIntegral $ rows xxs
 
 evaluateLoss' :: NeuralNetwork -> Loss -> (InMatrix, OutMatrix) -> Double
 evaluateLoss' nn lossFun (xxs,tts)
   | rows xxs == 0 = 0.0
-  | otherwise = getLoss lossFun forwardOut tts + evaluateLoss nn lossFun (xs,ts)
+  | otherwise = getLoss lossFun forwardOut tts + evaluateLoss' nn lossFun (xs,ts)
   where
     (x, xs) = splitRowsAt 1 xxs
     (t, ts) = splitRowsAt 1 tts
     (forwardOut, _) = forward nn xxs
 
-evaluateAndPrintLoss :: NeuralNetwork -> Loss -> (InMatrix, OutMatrix) -> IO ()
+evaluateAndPrintLoss :: NeuralNetwork -> Loss -> Datas -> IO ()
 evaluateAndPrintLoss nn lossFun datas = putStrLn $ "Total loss after training " ++ show (evaluateLoss nn lossFun datas)
+
+
+---------------------------------------------
+-- ACCURACY
+
+evaluateAccuracy :: NeuralNetwork -> Datas -> (Double, Integer, Integer)
+evaluateAccuracy nn (NotBatchedData (inputData,tgtData)) = accuracy (predData, tgtData)
+  where
+    (predData,_) = forward nn inputData
+evaluateAccuracy nn (BatchedData (inputDatas,tgtDatas)) = accuracy (predData, tgtData)
+  where
+    predData = stack (map (fst. forward nn) inputDatas)
+    tgtData = stack tgtDatas
+    stack (x:xs) = foldr (===) x xs
+    stack _      = (0><0) [] -- Empty matrix if nothing to stack
+
+accuracy :: (InMatrix, Matrix Double) -> (Double, Integer, Integer)
+accuracy  (predData, tgtData) = (fromInteger correctCount / fromIntegral (rows tgtData), correctCount, fromIntegral $ rows tgtData )
+  where
+    correctCount = foldr (\(pred, tgt) acc -> if maxIndex pred == maxIndex tgt then acc+1 else acc) 0 zippedRows
+    zippedRows = zip (toLists predData) (toLists tgtData)
+    maxIndex xs =  elemIndex (maximum xs) xs

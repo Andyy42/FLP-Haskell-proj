@@ -4,20 +4,24 @@ module Activations
   )
 where
 
-import Numeric.LinearAlgebra as La
-import Types
+import           Numeric.LinearAlgebra as La
+import           Types
 
-getActivation Relu = cRelu
-getActivation Sigmoid = cSigmoid
-getActivation Tanh = cTanh
-getActivation ID = id
+
+getActivation :: Activation -> (Matrix Double -> Matrix Double)
+getActivation activation = case activation of
+    Relu    -> cRelu
+    Sigmoid ->  cSigmoid
+    Tanh    -> cTanh
+    ID      -> id
 
 -- getActivation Softmax = cSoftmax
-
-getActivation' Relu = cRelu'
-getActivation' Sigmoid = cSigmoid'
-getActivation' Tanh = cTanh'
-getActivation' ID = cID' -- TODO: Return identity matrix?
+getActivation' :: Activation -> (Matrix Double -> Matrix Double)
+getActivation' activation = case activation of
+    Relu    -> cRelu'
+    Sigmoid -> cSigmoid'
+    Tanh    -> cTanh'
+    ID      -> cID' -- TODO: Return identity matrix?
 
 -- getActivation' Softmax = softmax' -- TODO: Not implemented
 
@@ -79,3 +83,5 @@ cTanh' = cmap tanh'
 -- TODO: How does d_i S_j = ... work here?? How to index?
 -- cSoftmax' :: (Container c b, Foldable c, Floating b) => c b -> c b
 -- cSoftmax' =
+
+-- TODO: softmax with crossentropy
