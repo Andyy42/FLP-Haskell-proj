@@ -71,7 +71,6 @@ layerParser = do
   spaces
   return $ LinearLayerConfig inSize outSize $ fromStrActivation activation
 
-
 -- | Parse an Experiment block
 experimentParser :: Parser Experiment
 experimentParser = do

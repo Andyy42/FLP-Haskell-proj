@@ -7,21 +7,20 @@ where
 import           Numeric.LinearAlgebra as La
 import           Types
 
-
 getActivation :: Activation -> (Matrix Double -> Matrix Double)
 getActivation activation = case activation of
-    Relu    -> cRelu
-    Sigmoid ->  cSigmoid
-    Tanh    -> cTanh
-    ID      -> id
+  Relu    -> cRelu
+  Sigmoid -> cSigmoid
+  Tanh    -> cTanh
+  ID      -> id
 
 -- getActivation Softmax = cSoftmax
 getActivation' :: Activation -> (Matrix Double -> Matrix Double)
 getActivation' activation = case activation of
-    Relu    -> cRelu'
-    Sigmoid -> cSigmoid'
-    Tanh    -> cTanh'
-    ID      -> cID' -- TODO: Return identity matrix?
+  Relu    -> cRelu'
+  Sigmoid -> cSigmoid'
+  Tanh    -> cTanh'
+  ID      -> cID' -- TODO: Return identity matrix?
 
 -- getActivation' Softmax = softmax' -- TODO: Not implemented
 

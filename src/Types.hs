@@ -16,7 +16,7 @@ module Types
     DataPaths (..),
     LinearLayerConfig (..),
     Experiment (..),
-    Datas(..)
+    Datas (..),
   )
 where
 
@@ -36,6 +36,7 @@ type LossValue = Double
 
 -- TODO: lookup function for activations
 data Activation = Relu | Sigmoid | Tanh | ID deriving (Show)
+
 -- \| Softmax
 
 data Loss = MSE | CrossEntropy deriving (Show)
@@ -74,10 +75,11 @@ data BackpropagationStore = BackpropagationStore
   }
   deriving (Show)
 
+type BatchedData = ([InMatrix], [OutMatrix])
 
-type BatchedData = ([InMatrix],[OutMatrix])
 type NotBatchedData = (InMatrix, OutMatrix)
-data Datas = BatchedData BatchedData  | NotBatchedData NotBatchedData
+
+data Datas = BatchedData BatchedData | NotBatchedData NotBatchedData
 
 data TrainData = TrainData
   { inTrain  :: [Matrix Double],
