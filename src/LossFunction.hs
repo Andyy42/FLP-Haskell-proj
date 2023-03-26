@@ -3,15 +3,17 @@ module LossFunction
     getLoss',
   )
 where
-
+import Prelude hiding (pred)
 import           Numeric.LinearAlgebra as La
 import           Types
 
+getLoss :: Loss -> Matrix Double -> Matrix Double -> Double
 getLoss loss = case loss of
   MSE          -> mse
   CrossEntropy -> crossEntropy
   CrossEntropySoftMax -> crossEntropySoftMax
 
+getLoss' :: Loss -> Matrix Double -> Matrix Double -> Matrix Double
 getLoss' loss = case loss of
   MSE          -> mse'
   CrossEntropy -> crossEntropy'
@@ -19,7 +21,7 @@ getLoss' loss = case loss of
 
 -- MSE (Mean squared error) sum \sum_k(t_k-y_k)^2
 mse :: Matrix Double -> Matrix Double -> Double
-mse pred tgt = sumElements $ cmap (^ 2) (pred - tgt)
+mse pred tgt = sumElements $ cmap (** 2.0) (pred - tgt)
 
 -- MSE derivation
 -- mse' :: (Container c e, Num e, Num (c e)) => c e -> c e -> c e
@@ -33,9 +35,9 @@ crossEntropy' :: Matrix Double -> Matrix Double -> Matrix Double
 crossEntropy' pred tgt = (-tgt) / pred
 
 cSoftmax :: Matrix Double -> Matrix Double
-cSoftmax c = cmap (/ expSum c) c
+cSoftmax pred = cmap (/ expSum) pred 
   where
-    expSum c = sumElements (cmap exp c)
+    expSum = sumElements (cmap exp pred)
 
 crossEntropySoftMax :: Matrix Double -> Matrix Double -> Double
 crossEntropySoftMax pred tgt = negate $ sumElements (tgt * cmap log (cSoftmax pred))

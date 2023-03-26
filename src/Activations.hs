@@ -5,7 +5,7 @@ module Activations
 where
 
 import           Numeric.LinearAlgebra as La
-import           Types
+import Types ( Activation(..) )
 
 getActivation :: Activation -> (Matrix Double -> Matrix Double)
 getActivation activation = case activation of
@@ -58,8 +58,8 @@ cSigmoid' = cmap sigmoid'
 cTanh :: Matrix Double -> Matrix Double
 cTanh = cmap tanh
 
-tanh' :: Floating a => a -> a
-tanh' x = 1 - tanh x ^ 2
+tanh' :: Double -> Double
+tanh' x = 1 - (tanh x ** 2.0)
 
 cTanh' :: Matrix Double -> Matrix Double
 cTanh' = cmap tanh'

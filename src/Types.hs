@@ -1,5 +1,5 @@
 module Types
-  ( NeuralNetwork (..),
+  ( NeuralNetwork,
     Layer (..),
     Activation (..),
     Loss (..),
@@ -81,13 +81,6 @@ type NotBatchedData = (InMatrix, OutMatrix)
 
 data Datas = BatchedData BatchedData | NotBatchedData NotBatchedData
 
-data TrainData = TrainData
-  { inTrain  :: [Matrix Double],
-    tgtTrain :: [Matrix Double],
-    inValid  :: [Matrix Double],
-    tgtValid :: [Matrix Double]
-  }
-
 -- | The DataPaths record type
 data DataPaths = DataPaths
   { dpTarget :: String,
@@ -122,16 +115,16 @@ data Experiment = Experiment
   }
 
 instance Show Experiment where
-  show exp =
+  show e =
     "========================================\n"
-    ++ "Experiment: " ++ show (expName exp) ++ "\n"
-    ++ "Epochs: " ++ show (expEpochs exp) ++ "\n"
-    ++ "Seed: " ++ show (expSeed exp) ++ "\n"
-    ++ "Batch Size: " ++ show (expBatchSize exp) ++ "\n"
-    ++ "Learning Rate: " ++ show (expLearningRate exp) ++ "\n"
-    ++ "Loss Function: " ++ show (expLossFunction exp) ++ "\n"
+    ++ "Experiment: " ++ show (expName e) ++ "\n"
+    ++ "Epochs: " ++ show (expEpochs e) ++ "\n"
+    ++ "Seed: " ++ show (expSeed e) ++ "\n"
+    ++ "Batch Size: " ++ show (expBatchSize e) ++ "\n"
+    ++ "Learning Rate: " ++ show (expLearningRate e) ++ "\n"
+    ++ "Loss Function: " ++ show (expLossFunction e) ++ "\n"
     ++ "Data Paths: \n"
-    ++ "  Targets: " ++ show (dpTarget $ expDataPaths exp) ++ "\n"
-    ++ "  Inputs: " ++ show (dpInput $ expDataPaths exp) ++ "\n"
-    ++ "Architecture: " ++ show (expArchitecture exp) ++ "\n"
+    ++ "  Targets: " ++ show (dpTarget $ expDataPaths e) ++ "\n"
+    ++ "  Inputs: " ++ show (dpInput $ expDataPaths e) ++ "\n"
+    ++ "Architecture: " ++ show (expArchitecture e) ++ "\n"
     ++ "========================================\n"

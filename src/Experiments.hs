@@ -2,21 +2,17 @@
 
 module Experiments where
 
-import           LossFunction          (getLoss, getLoss')
-import           NeuralNetwork         (backward, batchedTrainLoop,
+import           Prelude               hiding (exp, pred)
+import           NeuralNetwork         (batchedTrainLoop,
                                         createBatches, evaluateAccuracy,
-                                        evaluateLoss, forward, gradientDescent,
-                                        newB, newW, newWAllSame, trainLoop,
-                                        trainOneStep)
+                                        evaluateLoss, forward, 
+                                        newB, newW, newWAllSame, trainLoop)
 import           Numeric.LinearAlgebra as LA
-import           Types                 (Activation (..), BackpropagationStore,
-                                        DataPaths (..), Datas (..),
-                                        DeltasMatrix, Experiment (..),
-                                        Gradients, InMatrix,
-                                        Layer (Layer, activation, biases, weights),
-                                        LearningRate, LinearLayerConfig (..),
-                                        Loss (..), LossValue, NeuralNetwork,
-                                        OutMatrix, TargetMatrix)
+import           Types                 (DataPaths (..), Datas (..),
+                                        InMatrix, Layer (..),
+                                        LinearLayerConfig (..),
+                                        Loss (..), NeuralNetwork,
+                                        OutMatrix, Experiment (..))
 
 loadTargets :: Experiment -> IO (Matrix Double)
 loadTargets exp = loadMatrix $ dpTarget $ expDataPaths exp
@@ -62,7 +58,7 @@ createNN ::
   -- | The created neural network
   NeuralNetwork
 createNN (x : xs) seed = createLinearLayer x seed : createNN xs (seed + 1)
-createNN [] seed       = []
+createNN [] _ = []
 
 createLinearLayerTEST :: LinearLayerConfig -> Double -> Layer
 createLinearLayerTEST LinearLayerConfig {llIn, llOut, llActivation} num = Layer {weights = newWAllSame (llIn, llOut) num, biases = newB llOut, activation = llActivation}
@@ -112,13 +108,15 @@ printEvaluation nn lossFun datas =
   where
     (accuracy, correct, total) = evaluateAccuracy nn datas
 
+round6dp :: Double -> Double
+round6dp x = fromInteger (round $ x * 1e6 ) / 1e6 
+
 printPredictions :: NeuralNetwork -> InMatrix -> IO ()
 printPredictions nn inputs =
   putStrLn ("Showing " ++ show n ++ " predictions from neural network:") >> print (cmap round6dp pred)
   where
     (pred, _) = forward nn inputs
     n = rows inputs
-    round6dp x = fromIntegral (round $ x * 1e6) / 1e6 :: Double
 
 printTargets :: OutMatrix -> IO ()
 printTargets inputs =
@@ -135,10 +133,8 @@ testPrintConfig exp =
     >> print nn
     >> putStrLn ""
   where
-    lossFun = expLossFunction exp
-    seed = expSeed exp
     -- Init Neural Network
-    nn = createNN (expArchitecture exp) seed
+    nn = createNN (expArchitecture exp) (expSeed exp)
 
 doAllExperiments :: Experiment -> IO ()
 doAllExperiments exp = do
@@ -147,9 +143,6 @@ doAllExperiments exp = do
       arch = expArchitecture exp
       paths = expDataPaths exp
       batchSize = expBatchSize exp
-      epochs = expEpochs exp
-      lr = expLearningRate exp
-      name = expName exp
       nn = createNN arch seed
   loadedDatas <- loadBatched paths batchSize
   let datas = BatchedData loadedDatas
@@ -203,7 +196,6 @@ doExperimentNotBatched exp = do
       seed = expSeed exp
       arch = expArchitecture exp
       paths = expDataPaths exp
-      batchSize = expBatchSize exp
       epochs = expEpochs exp
       lr = expLearningRate exp
       name = expName exp

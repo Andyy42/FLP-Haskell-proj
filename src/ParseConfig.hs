@@ -41,42 +41,32 @@ int = read <$> many1 digit
 -- | Parse a double
 double :: Parser Double
 double = do
-  n <- many1 digit
-  char '.'
+  n <- many1 digit <* char '.'
   f <- many1 digit
   return (read $ n ++ "." ++ f)
 
 -- | Parse a DataPaths block
 dataPathsParser :: Parser DataPaths
 dataPathsParser = do
-  string "DataPaths {"
-  spaces
+  _ <- string "DataPaths {" <* spaces
   target <- string "target:" *> spaces *> quotedString <* spacedEndline
-  input <- string "input:" *> spaces *> quotedString <* spacedEndline
-  string "}"
+  input <- string "input:" *> spaces *> quotedString <* spacedEndline <* string "}"
   return $ DataPaths target input
 
 -- | Parse a Layer block
 layerParser :: Parser LinearLayerConfig
 layerParser = do
-  string "{"
-  spaces
-  string "LinearLayer {"
-  spaces
+  _ <- string "{" <* spaces <* string "LinearLayer {" <* spaces 
   inSize <- string "in:" *> spaces *> int <* spacedEndline
   outSize <- string "out:" *> spaces *> int <* spacedEndline
   activation <- string "activation:" *> spaces *> quotedString <* spacedEndline
-  string "}"
-  spaces
-  string "}"
-  spaces
+  _ <- string "}" <* spaces <* string "}" <* spaces
   return $ LinearLayerConfig inSize outSize $ fromStrActivation activation
 
 -- | Parse an Experiment block
 experimentParser :: Parser Experiment
 experimentParser = do
-  string "Experiment {"
-  spaces
+  _ <- string "Experiment {" <* spaces
   name <- string "name:" *> spaces *> quotedString <* spacedEndline
   epochs <- string "epochs:" *> spaces *> int <* spacedEndline
   seed <- string "seed:" *> spaces *> int <* spacedEndline
@@ -85,8 +75,7 @@ experimentParser = do
   dataPaths <- dataPathsParser <* spacedEndline
   lossFunction <- string "lossFunction:" *> spaces *> quotedString <* spacedEndline
   architecture <- string "architecture:" *> spaces *> between (char '[' <* whitespace) (whitespace *> char ']') (many layerParser) <* spacedEndline
-  spaces
-  string "}"
+  _ <- spaces <* string "}"
   return $ Experiment name epochs seed batchSize learningRate dataPaths (fromStrLoss lossFunction) architecture
 
 -- | Parse a configuration file and return an Experiment record

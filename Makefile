@@ -1,4 +1,4 @@
-NAME=neuralNetworksProj 
+NAME=flp22-fun
 BUILD_DIR=build
 
 install:
@@ -11,7 +11,7 @@ build_dir:
 	mkdir -p $(BUILD_DIR) 
 
 build: build_dir
-	cd src/ && ghc -O2 -dynamic Main.hs -o $(NAME) && mv $(NAME) ../build/$(NAME)
+	cd src/ && ghc -O3 -Wall -dynamic Main.hs -o $(NAME) && mv $(NAME) ../build/$(NAME)
 
 run_iris_small: build
 	$(BUILD_DIR)/$(NAME) --config configs/iris_small.conf --verbose --experiment 0

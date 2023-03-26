@@ -30,12 +30,12 @@ parseArgs args =
   where header = "Usage: neuralNetworksProj --config FILE [OPTIONS...]"
 
 doExperiments :: Maybe String -> Experiment -> IO()
-doExperiments Nothing exp = putStrLn "There is no experiment to do!"
-doExperiments (Just expNum) exp = case expNum of
-  "0" -> doAllExperiments exp
-  "1" -> doExperimentNotBatched exp
-  "2" -> doExperimentBatched exp
-  "3" -> doExperimentBatchedShuffled exp
+doExperiments Nothing _ = putStrLn "There is no experiment to do!"
+doExperiments (Just expNum) e = case expNum of
+  "0" -> doAllExperiments e 
+  "1" -> doExperimentNotBatched e 
+  "2" -> doExperimentBatched e 
+  "3" -> doExperimentBatchedShuffled e 
   _   -> putStrLn ("Invalid experiment number: " ++ show expNum) >> exitFailure
 
 readConfig :: FilePath -> IO Experiment
