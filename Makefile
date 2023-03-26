@@ -2,7 +2,7 @@ NAME=flp22-fun
 BUILD_DIR=build
 
 install:
-	cabal install
+	cabal v1-install
 
 run_cabal:
 	cabal run $(NAME) -- configs/iris_small.conf --experiment 0
