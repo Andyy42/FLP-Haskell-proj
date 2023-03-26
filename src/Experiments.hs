@@ -115,15 +115,13 @@ printEvaluation nn lossFun datas =
   where
     (accuracy, correct, total) = evaluateAccuracy nn datas
 
-round4dp :: Double -> Double
-round4dp x = fromIntegral (round $ x * 1e10) / 1e10
-
 printPredictions :: NeuralNetwork -> InMatrix -> IO ()
 printPredictions nn inputs =
-  putStrLn ("Showing " ++ show n ++ " predictions from neural network:") >> print pred -- (cmap round4dp pred)
+  putStrLn ("Showing " ++ show n ++ " predictions from neural network:") >> print (cmap round6dp pred)
   where
     (pred, _) = forward nn inputs
     n = rows inputs
+    round6dp x = fromIntegral (round $ x * 1e6) / 1e6 :: Double
 
 printTargets :: OutMatrix -> IO ()
 printTargets inputs =
@@ -163,10 +161,9 @@ doAllExperiments exp = do
   printEvaluation nn lossFun datas
   putStrLn "============================================================"
   putStrLn "============================================================"
+  doExperimentNotBatched exp
   doExperimentBatched exp
-
--- doExperimentBatchedShuffled exp
--- doExperimentNotBatched exp
+  doExperimentBatchedShuffled exp
 
 doExperimentBatchedShuffled :: Experiment -> IO ()
 doExperimentBatchedShuffled exp = do

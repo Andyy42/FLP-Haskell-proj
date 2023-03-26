@@ -39,7 +39,7 @@ data Activation = Relu | Sigmoid | Tanh | ID deriving (Show)
 
 -- \| Softmax
 
-data Loss = MSE | CrossEntropy deriving (Show)
+data Loss = MSE | CrossEntropy | CrossEntropySoftMax deriving (Show)
 
 -- Layer containes:   weights,   biases,   activation (non-linearity)
 data Layer = Layer

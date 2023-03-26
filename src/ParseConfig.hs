@@ -1,4 +1,4 @@
-module ParseInput (parseExperiment) where
+module ParseConfig (parseExperiment) where
 
 import           Control.Monad      (void)
 import           Text.Parsec
@@ -31,6 +31,7 @@ fromStrLoss :: String -> Loss
 fromStrLoss val
   | val `elem` ["mse", "MSE"] = MSE
   | val `elem` ["CrossEntropy", "CE", "ce"] = CrossEntropy
+  | val `elem` ["CrossEntropySogtMax", "CS", "cs"] = CrossEntropySoftMax
   | otherwise = MSE -- TODO: Throw error
 
 -- | Parse an integer

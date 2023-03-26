@@ -10,10 +10,12 @@ import           Types
 getLoss loss = case loss of
   MSE          -> mse
   CrossEntropy -> crossEntropy
+  CrossEntropySoftMax -> crossEntropySoftMax
 
 getLoss' loss = case loss of
   MSE          -> mse'
   CrossEntropy -> crossEntropy'
+  CrossEntropySoftMax -> crossEntropySoftMax'
 
 -- MSE (Mean squared error) sum \sum_k(t_k-y_k)^2
 mse :: Matrix Double -> Matrix Double -> Double
@@ -36,4 +38,17 @@ crossEntropy :: Matrix Double -> Matrix Double -> Double
 crossEntropy pred tgt = negate $ sumElements $ tgt * cmap log pred
 
 crossEntropy' :: Matrix Double -> Matrix Double -> Matrix Double
-crossEntropy' pred tgt = -tgt * cmap (^ (-1)) pred
+crossEntropy' pred tgt = (-tgt) / pred
+-- softmax x xs = exp x / sum (map exp xs)
+
+cSoftmax :: Matrix Double -> Matrix Double
+cSoftmax c = cmap (/ expSum c) c
+  where
+    expSum c = sumElements (cmap exp c) -- TODO: how does sumElements work
+
+crossEntropySoftMax :: Matrix Double -> Matrix Double -> Double
+crossEntropySoftMax pred tgt = negate $ sumElements (tgt * cmap log (cSoftmax pred))
+
+crossEntropySoftMax' :: Matrix Double -> Matrix Double -> Matrix Double
+crossEntropySoftMax' pred tgt = cmap ((/expSum) . exp) pred - tgt
+  where expSum = sumElements (cmap exp pred)

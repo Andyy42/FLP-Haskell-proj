@@ -15,11 +15,12 @@ module NeuralNetwork
 where
 
 import           Activations           (getActivation, getActivation')
-import           Control.Monad
-import           Control.Monad.ST
-import           Data.Array.ST
-import           Data.List
-import           Data.STRef
+import           Control.Monad         (forM, liftM)
+import           Control.Monad.ST      (ST, runST)
+import           Data.Array.ST         (STArray, newListArray, readArray,
+                                        writeArray)
+import           Data.List             (elemIndex)
+import           Data.STRef            (newSTRef, readSTRef, writeSTRef)
 import           LossFunction          (getLoss, getLoss')
 import           Numeric.LinearAlgebra as LA
 import           System.Random

@@ -1,7 +1,7 @@
 #### **Table with different types of matrix multiplications and their results**
 
-| **Types**  | **Scalar**                                                 | **Vector**                                                             | **Matrix**                                         |     |
-| ---------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------- | --- | --- |
+| **Types**  | **Scalar** | **Vector** | **Matrix** |
+| ---------- | ---------- | ---------- | ---------- | 
 | **Scalar** | $\frac{\partial{y}}{\partial{x}}$ = scalar                 | $\frac{\partial{\mathbf{y}}}{\partial{x}}$= **column** vector          | $\frac{\partial{\mathbf{Y}}}{\partial{x}}$= matrix |     |
 | **Vector** | $\frac{\partial{y}}{\partial{\mathbf{x}}}$= **row** vector | $\frac{\partial{\mathbf{y}}}{\partial{\mathbf{x}}}$ = matrix           |                                                    |     |
 | **Matrix** | $\frac{\partial{y}}{\partial{X}}$= matrix                  | $\frac{\partial{\mathbf{y}}}{\partial{\mathbf{X}}}$ = 3rd order tensor |                                                    |     | \   |
