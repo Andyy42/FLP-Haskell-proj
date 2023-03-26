@@ -1,10 +1,11 @@
-
-
 NAME=neuralNetworksProj 
 BUILD_DIR=build
 
+install:
+	cabal install
+
 run_cabal:
-	cabal run $(NAME) -- configs/mnist_big.conf
+	cabal run $(NAME) -- configs/iris_small.conf --experiment 0
 
 build_dir:
 	mkdir -p $(BUILD_DIR) 
