@@ -67,20 +67,6 @@ shuffle' xs gen =
 ------------------------------------------------------------
 ------------------------------------------------------------
 
--- Approach 1
--- do forward and collect values for each layer
--- do backward with collcted stuff on current NN, return new updated NN
-
--- Approach 1.1
--- Use some temporal stores? Store monad??
-
--- Approach 2
--- mix forward and backward together:
--- 0. Define update of single layer as:
--- 1. forward
--- 2. ask for dy by updating next layer (recursion to 0.)
--- 3. calculate dw db dy, return updated NN and dy
-
 ----------------------------------------
 -- DERIVATIONS OF LINEAR LAYER
 
@@ -175,12 +161,9 @@ makeSplit ratio m = splitRowsAt n m
 --   The function uses `forwardPass` function and initiate the backpropagation stores
 --   as an empty list.
 forward ::
-  -- | The neural network to evaluate.
-  NeuralNetwork ->
-  -- | The input matrix
-  InMatrix ->
-  -- | The output matrix and list of backpropagation stores.
-  (OutMatrix, [BackpropagationStore])
+  NeuralNetwork ->                    -- | The neural network to evaluate.
+  InMatrix ->                         -- | The input matrix
+  (OutMatrix, [BackpropagationStore]) -- | The output matrix and list of backpropagation stores.
 forward layers z_in = forwardPass layers z_in []
 
 -- | Helper function that performs a forward pass through a neural network with the
@@ -199,14 +182,10 @@ forward layers z_in = forwardPass layers z_in []
 --   If the neural network has no layers, the function simply returns the input matrix
 --   and the list of backpropagation stores (which is usually empty at this point).
 forwardPass ::
-  -- | The neural network to evaluate.
-  NeuralNetwork ->
-  -- | The input matrix.
-  InMatrix ->
-  -- | The list of backpropagation stores for each previous layer.
-  [BackpropagationStore] ->
-  -- | The output matrix and list of backpropagation stores.
-  (OutMatrix, [BackpropagationStore])
+  NeuralNetwork ->                    -- | The neural network to evaluate.
+  InMatrix ->                         -- | The input matrix.
+  [BackpropagationStore] ->           -- | The list of backpropagation stores for each previous layer.
+  (OutMatrix, [BackpropagationStore]) -- | The output matrix and list of backpropagation stores.
 forwardPass (layer : layers) z_in backpropStores =
   let u = z_in LA.<> weights layer
       f = activationFun layer
@@ -228,14 +207,10 @@ forwardPass [] z_in backpropStores = (z_in, backpropStores)
 --   If the neural network has no layers, the function simply returns the delta matrix
 --   and an empty list of gradients.
 backward ::
-  -- | The current layer of the neural network.
-  NeuralNetwork ->
-  -- | The backpropagation stores for the previous layers.
-  [BackpropagationStore] ->
-  -- | The delta matrix for the next layer.
-  DeltasMatrix ->
-  -- | The final delta matrix and list of gradients.
-  (DeltasMatrix, [Gradients])
+  NeuralNetwork ->            -- | The current layer of the neural network.
+  [BackpropagationStore] ->   -- | The backpropagation stores for the previous layers.
+  DeltasMatrix ->             -- | The delta matrix for the next layer.
+  (DeltasMatrix, [Gradients]) -- | The final delta matrix and list of gradients.
 backward layers backpropStores delta = backwardPass (reverse layers) (reverse backpropStores) delta []
 
 -- | Helper function that performs the backward pass through a single layer of the neural
@@ -255,16 +230,11 @@ backward layers backpropStores delta = backwardPass (reverse layers) (reverse ba
 --   If there are no more backpropagation stores or layers, the function simply returns
 --   the given delta matrix and list of gradients.
 backwardPass ::
-  -- | The current layer of the neural network.
-  NeuralNetwork ->
-  -- | The backpropagation stores for the previous layers.
-  [BackpropagationStore] ->
-  -- | The delta matrix for the next layer.
-  DeltasMatrix ->
-  -- | The list of gradients computed so far.
-  [Gradients] ->
-  -- | The final delta matrix and list of gradients.
-  (DeltasMatrix, [Gradients])
+  NeuralNetwork ->            -- | The current layer of the neural network.
+  [BackpropagationStore] ->   -- | The backpropagation stores for the previous layers.
+  DeltasMatrix ->             -- | The delta matrix for the next layer.
+  [Gradients] ->              -- | The list of gradients computed so far.
+  (DeltasMatrix, [Gradients]) -- | The final delta matrix and list of gradients.
 backwardPass (layer : layers) (store : backpropStores) delta gradients =
   let f' = activationFun' layer $ currentLayerU store -- data in cols (if batched dim is 'batch_size x data')
       delta_times_f' = hadamardProduct delta f'
@@ -308,14 +278,10 @@ backwardPass _ [] delta gradients = (delta, gradients)
 -- * If the neural network has no layers or the list of gradients is empty, the function
 --   returns an empty list.
 gradientDescent ::
-  -- | The neural network to update.
-  NeuralNetwork ->
-  -- | The list of gradients (one for each layer).
-  [Gradients] ->
-  -- | The learning rate.
-  LearningRate ->
-  -- | The updated neural network.
-  NeuralNetwork
+  NeuralNetwork ->  -- | The neural network to update.
+  [Gradients] ->    -- | The list of gradients (one for each layer).
+  LearningRate ->   -- | The learning rate.
+  NeuralNetwork     -- | The updated neural network.
 gradientDescent (layer : layers) (grad : gradients) lr =
   Layer
     { weights = weights layer - (lr `scale` dwGradient grad),
@@ -377,8 +343,6 @@ iterateTrainStep nn lossFun datas@(input, tgt) lr g = newNN : nextTrainStep
     (shuffledTgt, newG) = shuffle' tgt g
     nextTrainStep = iterateTrainStep newNN lossFun (shuffledInput, shuffledTgt) lr newG
 
--- TODO: Update (forward backward) all in one!!!
-
 -----------------------------------------------
 -- EVALUATE LOSS (batched or sample per sample)
 
@@ -386,14 +350,10 @@ iterateTrainStep nn lossFun datas@(input, tgt) lr g = newNN : nextTrainStep
 --   the loss for each batch and returns the average over all batches. If the dataset is not batched,
 --   it evaluates the loss for each sample and returns the average over all samples.
 evaluateLoss ::
-  -- | The neural network to evaluate.
-  NeuralNetwork ->
-  -- | The loss function to use.
-  Loss ->
-  -- | The dataset to evaluate the loss on.
-  Datas ->
-  -- | The average loss over the dataset.
-  Double
+  NeuralNetwork ->  -- | The neural network to evaluate.
+  Loss ->           -- | The loss function to use.
+  Datas ->          -- | The dataset to evaluate the loss on.
+  Double            -- | The average loss over the dataset.
 evaluateLoss nn lossFun (BatchedData (inputs, targets)) = if n > 0 then (/ n) $ foldr eval 0.0 $ zip inputs targets else 0.0
   where
     eval e acc = evaluateLoss nn lossFun (NotBatchedData e) + acc
@@ -404,14 +364,10 @@ evaluateLoss nn lossFun (NotBatchedData datas@(xxs, tts)) = if n > 0 then (/ n) 
 
 -- | Helper function for `evaluateLoss` that calculates the average loss for a single input-target pair.
 evaluateLoss' ::
-  -- | The neural network to evaluate.
-  NeuralNetwork ->
-  -- | The loss function to use.
-  Loss ->
-  -- | The input and target matrices to evaluate the loss on.
-  (InMatrix, OutMatrix) ->
-  -- | The average loss over the input-target pair.
-  Double
+  NeuralNetwork ->          -- | The neural network to evaluate.
+  Loss ->                   -- | The loss function to use.
+  (InMatrix, OutMatrix) ->  -- | The input and target matrices to evaluate the loss on.
+  Double                    -- | The average loss over the input-target pair.
 evaluateLoss' nn lossFun (xxs, tts)
   | rows xxs == 0 = 0.0
   | otherwise = getLoss lossFun forwardOut tts + evaluateLoss' nn lossFun (xs, ts)
@@ -434,12 +390,9 @@ evaluateAndPrintLoss nn lossFun datas = putStrLn $ "Total loss after training " 
 --
 -- The accuracy is returned as a percentage, along with the number of correct predictions and the total number of predictions.
 evaluateAccuracy ::
-  -- | The neural network to evaluate.
-  NeuralNetwork ->
-  -- | The input-target data to evaluate the accuracy on.
-  Datas ->
-  -- | A tuple containing the accuracy as a percentage, the number of correct predictions, and the total number of predictions.
-  (Double, Integer, Integer)
+  NeuralNetwork ->            -- | The neural network to evaluate.
+  Datas ->                    -- | The input-target data to evaluate the accuracy on.
+  (Double, Integer, Integer)  -- | A tuple containing the accuracy as a percentage, the number of correct predictions, and the total number of predictions.
 evaluateAccuracy nn (NotBatchedData (inputData, tgtData)) = accuracy (predData, tgtData)
   where
     (predData, _) = forward nn inputData
@@ -454,10 +407,8 @@ evaluateAccuracy nn (BatchedData (inputDatas, tgtDatas)) = accuracy (predData, t
 --
 -- The accuracy is returned as a percentage, along with the number of correct predictions and the total number of predictions.
 accuracy ::
-  -- | The predicted and target matrices.
-  (InMatrix, Matrix Double) ->
-  -- | A tuple containing the accuracy as a percentage, the number of correct predictions, and the total number of predictions.
-  (Double, Integer, Integer)
+  (InMatrix, Matrix Double) ->  -- | The predicted and target matrices.
+  (Double, Integer, Integer)    -- | A tuple containing the accuracy as a percentage, the number of correct predictions, and the total number of predictions.
 accuracy (predData, tgtData) = (accuracy, correctCount, fromIntegral (rows tgtData))
   where
     correctCount = foldr (\(pred, tgt) acc -> if maxIndex pred == maxIndex tgt then acc + 1 else acc) 0 zippedRows

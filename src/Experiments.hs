@@ -40,12 +40,9 @@ loadInputs exp = loadMatrix $ dpInput $ expDataPaths exp
 -- Returns a 'Layer' record containing the weights, biases, and activation function
 -- for the created linear layer.
 createLinearLayer ::
-  -- | The configuration for the linear layer
-  LinearLayerConfig ->
-  -- | The seed for the random number generator
-  Int ->
-  -- | The created linear layer
-  Layer
+  LinearLayerConfig ->  -- | The configuration for the linear layer
+  Int ->                -- | The seed for the random number generator
+  Layer                 -- | The created linear layer
 createLinearLayer LinearLayerConfig {llIn, llOut, llActivation} seed = Layer {weights = newW (llIn, llOut) seed, biases = newB llOut, activation = llActivation}
 
 -- | Creates a neural network with the specified configuration parameters. The
