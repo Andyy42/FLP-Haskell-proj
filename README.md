@@ -141,7 +141,7 @@ All source files are in `src` directory, training data for iris and mnist-number
 ├──  ParseInput.hs
 └──  Types.hs
  docs 
-└──  README.md
+└──  MATH.md
  Makefile
  neuralNetworksProj.cabal
  README.md
