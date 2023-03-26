@@ -101,7 +101,13 @@ data LinearLayerConfig = LinearLayerConfig
     llOut        :: Int,
     llActivation :: Activation
   }
-  deriving (Show)
+
+instance Show LinearLayerConfig where
+  show conf =
+    "\n  Linear Layer:"
+    ++ " in: " ++ show (llIn conf) ++ " out: " ++ show (llOut conf) ++ "\n"
+    ++ "    Activation: " ++ show (llActivation conf)
+
 
 -- | The Experiment record type
 data Experiment = Experiment
@@ -114,4 +120,18 @@ data Experiment = Experiment
     expLossFunction :: Loss,
     expArchitecture :: [LinearLayerConfig]
   }
-  deriving (Show)
+
+instance Show Experiment where
+  show exp =
+    "========================================\n"
+    ++ "Experiment: " ++ show (expName exp) ++ "\n"
+    ++ "Epochs: " ++ show (expEpochs exp) ++ "\n"
+    ++ "Seed: " ++ show (expSeed exp) ++ "\n"
+    ++ "Batch Size: " ++ show (expBatchSize exp) ++ "\n"
+    ++ "Learning Rate: " ++ show (expLearningRate exp) ++ "\n"
+    ++ "Loss Function: " ++ show (expLossFunction exp) ++ "\n"
+    ++ "Data Paths: \n"
+    ++ "  Targets: " ++ show (dpTarget $ expDataPaths exp) ++ "\n"
+    ++ "  Inputs: " ++ show (dpInput $ expDataPaths exp) ++ "\n"
+    ++ "Architecture: " ++ show (expArchitecture exp) ++ "\n"
+    ++ "========================================\n"
