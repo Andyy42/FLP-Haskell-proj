@@ -36,10 +36,8 @@ type LossValue = Double
 
 -- TODO: lookup function for activations
 data Activation = Relu | Sigmoid | Tanh | ID deriving (Show)
-
 -- \| Softmax
 
--- TODO: lookup function for loss functions
 data Loss = MSE | CrossEntropy deriving (Show)
 
 -- Layer containes:   weights,   biases,   activation (non-linearity)
@@ -60,13 +58,8 @@ instance Show Layer where
       ++ show (activation layer)
       ++ "\n"
 
--- NeuralNetwork (fully-connected) is made of layers
+-- | NeuralNetwork (fully-connected) made of list of layers
 type NeuralNetwork = [Layer]
-
--- instance Show (NeuralNetwork a) where
---   show = showLayer
---     where
---         showLayer [x:xs] = show x ++ showLayer xs
 
 -- Gradients for biases 'db' and weights 'dw"
 data Gradients = Gradients
@@ -81,7 +74,6 @@ data BackpropagationStore = BackpropagationStore
   }
   deriving (Show)
 
--- type BackpropagationStoreValues a = [BackpropagationStore a]
 
 type BatchedData = ([InMatrix],[OutMatrix])
 type NotBatchedData = (InMatrix, OutMatrix)

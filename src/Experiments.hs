@@ -112,9 +112,12 @@ printEvaluation nn lossFun datas =
   where
     (accuracy, correct, total) = evaluateAccuracy nn datas
 
+round4dp :: Double -> Double
+round4dp x = fromIntegral (round $ x * 1e10) / 1e10 
+
 printPredictions :: NeuralNetwork -> InMatrix -> IO ()
 printPredictions nn inputs =
-  putStrLn ("Showing "++show n++" predictions from neural network:") >> print pred
+  putStrLn ("Showing "++show n++" predictions from neural network:") >> print pred --(cmap round4dp pred)
   where
     (pred,_) = forward nn inputs
     n = rows inputs
@@ -153,7 +156,9 @@ doAllExperiments exp = do
     printEvaluation nn lossFun datas
     putStrLn "============================================================"
     putStrLn "============================================================"
-    doExperimentBatched exp >> doExperimentBatchedShuffled exp >> doExperimentNotBatched exp
+    doExperimentBatched exp
+    -- doExperimentBatchedShuffled exp
+    -- doExperimentNotBatched exp
 
 
 doExperimentBatchedShuffled :: Experiment -> IO ()
@@ -165,7 +170,7 @@ doExperimentBatchedShuffled exp = do
         nn = createNN arch seed
 
     datas@(inputs, targets) <- loadBatched paths batchSize
-    let (lossValue, trainedNN) = batchedTrainLoop epochs nn lossFun (inputs,targets) lr seed
+    let trainedNN = batchedTrainLoop epochs nn lossFun (inputs,targets) lr seed
     putStrLn ""
     printExperimentBlock (name ++ " (Batched + shuffled)" ) trainedNN lossFun (BatchedData datas) epochs
 
@@ -179,7 +184,7 @@ doExperimentBatched exp = do
 
     loadedDatas  <- loadBatched paths batchSize
     let datas = BatchedData loadedDatas
-    let (lossValue, trainedNN) = trainLoop epochs nn lossFun datas lr
+    let trainedNN = trainLoop epochs nn lossFun datas lr
     putStrLn ""
     printExperimentBlock (name ++ " (Batched + NOT shuffled)" ) trainedNN lossFun datas epochs
 
@@ -194,7 +199,7 @@ doExperimentNotBatched exp = do
     inputs <- loadMatrix $ dpInput paths
     targets <- loadMatrix $ dpTarget paths
     let datas = NotBatchedData (inputs,targets)
-    let (lossValue, trainedNN) = trainLoop epochs nn lossFun datas lr
+    let trainedNN = trainLoop epochs nn lossFun datas lr
     putStrLn ""
     printExperimentBlock (name ++ " (Not Batched)" ) trainedNN lossFun datas epochs 
 
